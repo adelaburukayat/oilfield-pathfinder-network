@@ -33,7 +33,7 @@ function Onboarding() {
   const [values, setValues] = useState<Values>({});
   const [errors, setErrors] = useState<string[]>([]);
   const [done, setDone] = useState(false);
-  const step = steps[index];
+  const step = steps[index] ?? steps[0]!;
   const isReview = step.id === "review";
   const progress = ((index + (done ? 1 : 0)) / steps.length) * 100;
 
@@ -108,7 +108,7 @@ function Onboarding() {
         <main className="flex flex-1 justify-center px-6 py-10 md:px-12 md:py-14">
           <div className="w-full max-w-2xl">
             {done ? (
-              <Success name={String(values.firstName ?? values.companyName ?? "")} label={path.label} />
+              <Success name={String(values["firstName"] ?? values["companyName"] ?? "")} label={path.label} />
             ) : (
               <div key={step.id} className="animate-in fade-in slide-in-from-bottom-2 duration-400">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gold">
