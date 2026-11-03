@@ -35,7 +35,7 @@ function Onboarding() {
   const [done, setDone] = useState(false);
   const step = steps[index] ?? steps[0]!;
   const isReview = step.id === "review";
-  const progress = ((index + (done ? 1 : 0)) / steps.length) * 100;
+
 
   const set = (name: string, v: string | string[]) => {
     setValues((s) => ({ ...s, [name]: v }));
