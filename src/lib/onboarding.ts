@@ -46,19 +46,10 @@ export const PATHS: Record<PathType, PathConfig> = {
     perks: ["Verified work history", "Certification vault", "Visible to operators"],
     steps: [
       {
-        id: "personal", title: "Personal details", description: "This is how you'll appear on your passport.",
-        fields: [
-          { name: "firstName", label: "First name", type: "text", required: true, half: true },
-          { name: "lastName", label: "Last name", type: "text", required: true, half: true },
-          { name: "phone", label: "Phone number", type: "tel", placeholder: "+234 800 000 0000", required: true, half: true },
-          { name: "dob", label: "Date of birth", type: "date", half: true },
-          { name: "country", label: "Country of residence", type: "select", options: countries, required: true, half: true },
-          { name: "city", label: "City", type: "text", half: true },
-        ],
-      },
-      {
         id: "career", title: "Career profile", description: "Tell us where you work and what you do.",
         fields: [
+          { name: "phone", label: "Phone number", type: "tel", placeholder: "+234 800 000 0000", required: true, half: true },
+          { name: "country", label: "Country of residence", type: "select", options: countries, required: true, half: true },
           { name: "jobTitle", label: "Current job title", type: "text", placeholder: "e.g. Senior Drilling Engineer", required: true },
           { name: "employer", label: "Current employer", type: "text", half: true },
           { name: "years", label: "Years of experience", type: "select", options: ["0–2", "3–5", "6–10", "11–15", "15+"], required: true, half: true },
@@ -87,17 +78,10 @@ export const PATHS: Record<PathType, PathConfig> = {
     perks: ["Internship matching", "Skills tracking", "Mentor access"],
     steps: [
       {
-        id: "personal", title: "Personal details", description: "This is how you'll appear on your passport.",
-        fields: [
-          { name: "firstName", label: "First name", type: "text", required: true, half: true },
-          { name: "lastName", label: "Last name", type: "text", required: true, half: true },
-          { name: "phone", label: "Phone number", type: "tel", placeholder: "+234 800 000 0000", required: true, half: true },
-          { name: "country", label: "Country", type: "select", options: countries, required: true, half: true },
-        ],
-      },
-      {
         id: "education", title: "Education", description: "Where are you studying, and what?",
         fields: [
+          { name: "phone", label: "Phone number", type: "tel", placeholder: "+234 800 000 0000", required: true, half: true },
+          { name: "country", label: "Country", type: "select", options: countries, required: true, half: true },
           { name: "institution", label: "Institution", type: "text", placeholder: "e.g. University of Port Harcourt", required: true },
           { name: "course", label: "Course of study", type: "text", placeholder: "e.g. Petroleum Engineering", required: true, half: true },
           { name: "level", label: "Current level", type: "select", options: ["100 Level", "200 Level", "300 Level", "400 Level", "500 Level", "Graduate", "Postgraduate"], required: true, half: true },

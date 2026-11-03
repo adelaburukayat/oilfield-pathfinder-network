@@ -35,7 +35,7 @@ function Onboarding() {
   const [done, setDone] = useState(false);
   const step = steps[index] ?? steps[0]!;
   const isReview = step.id === "review";
-  const progress = ((index + (done ? 1 : 0)) / steps.length) * 100;
+
 
   const set = (name: string, v: string | string[]) => {
     setValues((s) => ({ ...s, [name]: v }));
@@ -65,45 +65,45 @@ function Onboarding() {
               <Icon className="size-3.5" /> {path.label} passport
             </span>
           </div>
-          <ol className="mt-10 space-y-1">
-            {steps.map((s, i) => {
-              const state = done || i < index ? "done" : i === index ? "current" : "todo";
-              return (
-                <li key={s.id} className="relative flex gap-4 pb-6 last:pb-0">
-                  {i < steps.length - 1 && (
-                    <span className={`absolute left-[15px] top-9 h-[calc(100%-2.25rem)] w-px ${state === "done" ? "bg-gold" : "bg-ink-foreground/15"}`} />
-                  )}
-                  <span
-                    className={`relative grid size-8 shrink-0 place-items-center rounded-full text-xs font-semibold transition-all ${
-                      state === "done" ? "bg-gold text-ink" : state === "current" ? "bg-ink-foreground text-ink ring-4 ring-ink-foreground/15" : "bg-ink-foreground/5 text-ink-foreground/50 ring-1 ring-ink-foreground/15"
-                    }`}
-                  >
-                    {state === "done" ? <Check className="size-4" strokeWidth={3} /> : i + 1}
-                  </span>
-                  <div className="pt-1">
-                    <p className={`text-sm font-medium ${state === "todo" ? "text-ink-foreground/50" : "text-ink-foreground"}`}>{s.title}</p>
-                    <p className="mt-0.5 text-xs text-ink-foreground/50">{s.description}</p>
-                  </div>
+          <div className="mt-auto">
+            <h2 className="font-display text-3xl font-semibold leading-tight text-ink-foreground">{path.tagline}</h2>
+            <p className="mt-3 text-sm text-ink-foreground/70">{path.description}</p>
+            <ul className="mt-8 space-y-3">
+              {path.perks.map((p) => (
+                <li key={p} className="flex items-center gap-3 text-sm text-ink-foreground">
+                  <span className="grid size-6 place-items-center rounded-full bg-gold text-ink"><Check className="size-3.5" strokeWidth={3} /></span>
+                  {p}
                 </li>
-              );
-            })}
-          </ol>
-          <p className="mt-auto text-xs text-ink-foreground/50">Your data is encrypted and only shared with your consent.</p>
+              ))}
+            </ul>
+          </div>
+          <p className="mt-10 text-xs text-ink-foreground/50">Your data is encrypted and only shared with your consent.</p>
         </div>
       </aside>
 
       {/* Main */}
       <div className="flex min-h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-border px-6 py-5 md:px-12">
-          <div className="lg:hidden"><Logo /></div>
-          <Link to="/" className="hidden items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground lg:inline-flex">
-            <ArrowLeft className="size-4" /> Change path
-          </Link>
-          <HelpLink />
+        <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-5 md:px-12">
+          <div className="flex items-center gap-4">
+            <div className="lg:hidden"><Logo /></div>
+            <Link to="/" className="hidden items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground lg:inline-flex">
+              <ArrowLeft className="size-4" /> Change path
+            </Link>
+          </div>
+          <div className="flex items-center gap-5">
+            <div className="flex flex-col items-end gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">
+                {done ? "Complete" : <>Step <span className="text-foreground">{index + 1}</span> of {steps.length} · {step.title}</>}
+              </span>
+              <div className="flex gap-1">
+                {steps.map((s, i) => (
+                  <span key={s.id} className={`h-1.5 w-8 rounded-full transition-colors duration-500 ${done || i < index ? "bg-gold" : i === index ? "bg-primary" : "bg-muted"}`} />
+                ))}
+              </div>
+            </div>
+            <span className="hidden sm:block"><HelpLink /></span>
+          </div>
         </header>
-        <div className="h-1 bg-muted">
-          <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
-        </div>
 
         <main className="flex flex-1 justify-center px-6 py-10 md:px-12 md:py-14">
           <div className="w-full max-w-2xl">
