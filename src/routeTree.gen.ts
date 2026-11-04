@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingTypeRouteImport } from './routes/onboarding.$type'
+import { Route as ProfileTypeRouteImport } from './routes/profile.$type'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const OnboardingTypeRoute = OnboardingTypeRouteImport.update({
   path: '/onboarding/$type',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileTypeRoute = ProfileTypeRouteImport.update({
+  id: '/profile/$type',
+  path: '/profile/$type',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding/$type': typeof OnboardingTypeRoute
+  '/profile/$type': typeof ProfileTypeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding/$type': typeof OnboardingTypeRoute
+  '/profile/$type': typeof ProfileTypeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/onboarding/$type': typeof OnboardingTypeRoute
+  '/profile/$type': typeof ProfileTypeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/onboarding/$type'
+  fullPaths: '/' | '/onboarding/$type' | '/profile/$type'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/onboarding/$type'
-  id: '__root__' | '/' | '/onboarding/$type'
+  to: '/' | '/onboarding/$type' | '/profile/$type'
+  id: '__root__' | '/' | '/onboarding/$type' | '/profile/$type'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardingTypeRoute: typeof OnboardingTypeRoute
+  ProfileTypeRoute: typeof ProfileTypeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingTypeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$type': {
+      id: '/profile/$type'
+      path: '/profile/$type'
+      fullPath: '/profile/$type'
+      preLoaderRoute: typeof ProfileTypeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingTypeRoute: OnboardingTypeRoute,
+  ProfileTypeRoute: ProfileTypeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
