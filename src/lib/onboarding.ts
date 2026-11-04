@@ -160,3 +160,11 @@ export function missingRequired(step: Step, values: Values): string[] {
     })
     .map((f) => f.name);
 }
+
+const key = (t: PathType) => `ep-profile-${t}`;
+export function saveProfile(t: PathType, v: Values) {
+  try { localStorage.setItem(key(t), JSON.stringify(v)); } catch { /* ignore */ }
+}
+export function loadProfile(t: PathType): Values {
+  try { return JSON.parse(localStorage.getItem(key(t)) ?? "{}") as Values; } catch { return {}; }
+}

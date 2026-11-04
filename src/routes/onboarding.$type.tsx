@@ -1,8 +1,8 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CloudUpload, BadgeCheck, Pencil } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CloudUpload } from "lucide-react";
 import { Logo, HelpLink } from "@/components/brand";
-import { PATHS, isPathType, missingRequired, type Field, type Values } from "@/lib/onboarding";
+import { PATHS, isPathType, missingRequired, saveProfile, type Field, type Values } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/onboarding/$type")({
   loader: ({ params }) => {
@@ -28,13 +28,14 @@ export const Route = createFileRoute("/onboarding/$type")({
 function Onboarding() {
   const { type } = Route.useLoaderData();
   const path = PATHS[type];
-  const steps = [...path.steps, { id: "review", title: "Review & submit", description: "Check your details before creating your passport.", fields: [] }];
+  const steps = path.steps;
+  const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [values, setValues] = useState<Values>({});
   const [errors, setErrors] = useState<string[]>([]);
-  const [done, setDone] = useState(false);
   const step = steps[index] ?? steps[0]!;
-  const isReview = step.id === "review";
+  const isLast = index === steps.length - 1;
+  const done = false;
 
 
   const set = (name: string, v: string | string[]) => {
@@ -43,10 +44,14 @@ function Onboarding() {
   };
 
   const next = () => {
-    if (isReview) return setDone(true);
     const missing = missingRequired(step, values);
     if (missing.length) return setErrors(missing);
     setErrors([]);
+    if (isLast) {
+      saveProfile(type, values);
+      navigate({ to: "/profile/$type", params: { type } });
+      return;
+    }
     setIndex((i) => i + 1);
   };
 
@@ -107,9 +112,7 @@ function Onboarding() {
 
         <main className="flex flex-1 justify-center px-6 py-10 md:px-12 md:py-14">
           <div className="w-full max-w-2xl">
-            {done ? (
-              <Success name={String(values["firstName"] ?? values["companyName"] ?? "")} label={path.label} />
-            ) : (
+            {(
               <div key={step.id} className="animate-in fade-in slide-in-from-bottom-2 duration-400">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gold">
                   Step {index + 1} of {steps.length}
@@ -117,9 +120,7 @@ function Onboarding() {
                 <h1 className="mt-3 text-3xl font-semibold text-foreground md:text-4xl">{step.title}</h1>
                 <p className="mt-2 text-muted-foreground">{step.description}</p>
 
-                {isReview ? (
-                  <Review steps={path.steps} values={values} onEdit={setIndex} />
-                ) : (
+                {(
                   <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-6">
                     {step.fields.map((f) => (
                       <FieldInput key={f.name} field={f} value={values[f.name]} error={errors.includes(f.name)} onChange={(v) => set(f.name, v)} />
@@ -138,7 +139,7 @@ function Onboarding() {
                     </button>
                   )}
                   <button onClick={next} className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lift transition-colors hover:bg-primary-deep">
-                    {isReview ? "Create passport" : "Continue"} <ArrowRight className="size-4" />
+                    {isLast ? "Create profile" : "Continue"} <ArrowRight className="size-4" />
                   </button>
                 </div>
               </div>
@@ -210,63 +211,3 @@ function FieldInput({ field, value, error, onChange }: { field: Field; value: Va
   );
 }
 
-function Review({ steps, values, onEdit }: { steps: typeof PATHS.professional.steps; values: Values; onEdit: (i: number) => void }) {
-  return (
-    <div className="mt-10 space-y-4">
-      {steps.map((s, i) => (
-        <section key={s.id} className="rounded-2xl border border-border bg-card p-6 shadow-card">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-foreground">{s.title}</h3>
-            <button onClick={() => onEdit(i)} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-deep">
-              <Pencil className="size-3.5" /> Edit
-            </button>
-          </div>
-          <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
-            {s.fields.map((f) => {
-              const v = values[f.name];
-              const text = Array.isArray(v) ? v.join(", ") : v;
-              return (
-                <div key={f.name}>
-                  <dt className="text-xs text-muted-foreground">{f.label}</dt>
-                  <dd className="mt-0.5 text-sm text-foreground">{text || "—"}</dd>
-                </div>
-              );
-            })}
-          </dl>
-        </section>
-      ))}
-    </div>
-  );
-}
-
-function Success({ name, label }: { name: string; label: string }) {
-  const id = "EP-" + Math.abs([...name, ...label].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) % 1000000).toString().padStart(6, "0");
-  return (
-    <div className="flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-500">
-      <span className="grid size-14 place-items-center rounded-full bg-secondary text-primary"><BadgeCheck className="size-7" /></span>
-      <h1 className="mt-6 text-3xl font-semibold text-foreground md:text-4xl">Your passport is ready</h1>
-      <p className="mt-2 max-w-md text-muted-foreground">We're reviewing your details. You'll get an email once verification is complete.</p>
-
-      <div className="relative mt-10 w-full max-w-md overflow-hidden rounded-3xl bg-ink p-7 text-left text-ink-foreground shadow-lift">
-        <div className="absolute -right-16 -top-16 size-56 rounded-full bg-primary/40 blur-3xl" />
-        <div className="absolute -bottom-20 -left-10 size-48 rounded-full bg-gold/25 blur-3xl" />
-        <div className="relative flex items-center justify-between">
-          <Logo inverted />
-          <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11px] font-medium text-gold ring-1 ring-gold/30">Pending review</span>
-        </div>
-        <div className="relative mt-12">
-          <p className="text-xs uppercase tracking-[0.14em] text-ink-foreground/50">Holder</p>
-          <p className="mt-1 font-display text-2xl font-semibold">{name || "—"}</p>
-        </div>
-        <div className="relative mt-6 flex justify-between text-sm">
-          <div><p className="text-xs text-ink-foreground/50">Path</p><p className="mt-0.5">{label}</p></div>
-          <div className="text-right"><p className="text-xs text-ink-foreground/50">Passport no.</p><p className="mt-0.5 font-mono tracking-wider text-gold">{id}</p></div>
-        </div>
-      </div>
-
-      <Link to="/" className="mt-10 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lift hover:bg-primary-deep">
-        Go to dashboard <ArrowRight className="size-4" />
-      </Link>
-    </div>
-  );
-}
