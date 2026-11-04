@@ -28,7 +28,7 @@ export const Route = createFileRoute("/profile/$type")({
   component: ProfilePage,
 });
 
-const s = (v: Values[string] | undefined) => (Array.isArray(v) ? v.join(", ") : v ?? "");
+const s = (v: Values[string] | undefined) => (Array.isArray(v) ? v["join"](", ") : v ?? "");
 const arr = (v: Values[string] | undefined) => (Array.isArray(v) ? v : []);
 
 function ProfilePage() {
@@ -131,19 +131,19 @@ function Stat({ label, value }: { label: string; value: string }) {
 /* ---------- Professional ---------- */
 
 function Professional({ v }: { v: Values }) {
-  const certs = arr(v.certs);
+  const certs = arr(v["certs"]);
   return (
     <div className="space-y-6">
-      <Hero icon={<Briefcase className="size-7" />} eyebrow="Professional passport" title={s(v.jobTitle)} subtitle={s(v.employer) || "Independent"} badge="Verification pending"
-        meta={<><Meta icon={<MapPin className="size-4" />}>{s(v.country)}</Meta><Meta icon={<Phone className="size-4" />}>{s(v.phone)}</Meta></>} />
+      <Hero icon={<Briefcase className="size-7" />} eyebrow="Professional passport" title={s(v["jobTitle"])} subtitle={s(v["employer"]) || "Independent"} badge="Verification pending"
+        meta={<><Meta icon={<MapPin className="size-4" />}>{s(v["country"])}</Meta><Meta icon={<Phone className="size-4" />}>{s(v["phone"])}</Meta></>} />
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Years of experience" value={s(v.years)} />
+        <Stat label="Years of experience" value={s(v["years"])} />
         <Stat label="Certifications" value={String(certs.length)} />
-        <Stat label="Disciplines" value={String(arr(v.disciplines).length)} />
+        <Stat label="Disciplines" value={String(arr(v["disciplines"]).length)} />
       </div>
       <div className="grid gap-6 md:grid-cols-[1.4fr_1fr]">
         <div className="space-y-6">
-          <Card title="Disciplines" icon={<Layers className="size-4" />}><Chips items={arr(v.disciplines)} /></Card>
+          <Card title="Disciplines" icon={<Layers className="size-4" />}><Chips items={arr(v["disciplines"])} /></Card>
           <Card title="Certification vault" icon={<Award className="size-4" />}>
             {certs.length ? (
               <ul className="grid gap-3 sm:grid-cols-2">
@@ -158,11 +158,11 @@ function Professional({ v }: { v: Values }) {
           </Card>
         </div>
         <div className="space-y-6">
-          <Card title="Work environment" icon={<Globe className="size-4" />}><Chips items={arr(v.environment)} tone="gold" /></Card>
+          <Card title="Work environment" icon={<Globe className="size-4" />}><Chips items={arr(v["environment"])} tone="gold" /></Card>
           <Card title="Credentials" icon={<ShieldCheck className="size-4" />}>
-            <Row label="Licence no." value={s(v.license)} />
-            <Row label="LinkedIn" value={s(v.linkedin)} />
-            <Row label="CV" value={s(v.cv)} />
+            <Row label="Licence no." value={s(v["license"])} />
+            <Row label="LinkedIn" value={s(v["linkedin"])} />
+            <Row label="CV" value={s(v["cv"])} />
           </Card>
         </div>
       </div>
@@ -174,31 +174,31 @@ function Professional({ v }: { v: Values }) {
 
 function Student({ v }: { v: Values }) {
   const levels = ["100 Level", "200 Level", "300 Level", "400 Level", "500 Level", "Graduate", "Postgraduate"];
-  const pos = Math.max(0, levels.indexOf(s(v.level)));
+  const pos = Math.max(0, levels.indexOf(s(v["level"])));
   const pct = Math.round(((pos + 1) / 5) * 100);
   return (
     <div className="space-y-6">
-      <Hero icon={<GraduationCap className="size-7" />} eyebrow="Student passport" title={s(v.course)} subtitle={s(v.institution)} badge="Open to opportunities"
-        meta={<><Meta icon={<MapPin className="size-4" />}>{s(v.country)}</Meta><Meta icon={<Phone className="size-4" />}>{s(v.phone)}</Meta><Meta icon={<Calendar className="size-4" />}>{v.gradYear ? `Class of ${s(v.gradYear)}` : ""}</Meta></>} />
+      <Hero icon={<GraduationCap className="size-7" />} eyebrow="Student passport" title={s(v["course"])} subtitle={s(v["institution"])} badge="Open to opportunities"
+        meta={<><Meta icon={<MapPin className="size-4" />}>{s(v["country"])}</Meta><Meta icon={<Phone className="size-4" />}>{s(v["phone"])}</Meta><Meta icon={<Calendar className="size-4" />}>{v["gradYear"] ? `Class of ${s(v["gradYear"])}` : ""}</Meta></>} />
       <div className="grid gap-6 md:grid-cols-[1fr_1.4fr]">
         <div className="space-y-6">
           <Card title="Academic progress" icon={<GraduationCap className="size-4" />}>
             <div className="flex items-baseline justify-between">
-              <span className="font-display text-2xl font-semibold text-foreground">{s(v.level) || "—"}</span>
+              <span className="font-display text-2xl font-semibold text-foreground">{s(v["level"]) || "—"}</span>
               <span className="text-xs text-muted-foreground">{Math.min(pct, 100)}%</span>
             </div>
             <div className="mt-3 h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-gold" style={{ width: `${Math.min(pct, 100)}%` }} /></div>
-            <div className="mt-4"><Row label="Student ID" value={s(v.matric)} /><Row label="Graduation" value={s(v.gradYear)} /></div>
+            <div className="mt-4"><Row label="Student ID" value={s(v["matric"])} /><Row label="Graduation" value={s(v["gradYear"])} /></div>
           </Card>
-          <Card title="Documents" icon={<FileText className="size-4" />}><Row label="ID / letter" value={s(v.letter)} /></Card>
+          <Card title="Documents" icon={<FileText className="size-4" />}><Row label="ID / letter" value={s(v["letter"])} /></Card>
         </div>
         <div className="space-y-6">
-          <Card title="Looking for" icon={<Target className="size-4" />}><Chips items={arr(v.type)} tone="gold" /></Card>
-          <Card title="Areas of interest" icon={<Layers className="size-4" />}><Chips items={arr(v.interests)} /></Card>
+          <Card title="Looking for" icon={<Target className="size-4" />}><Chips items={arr(v["type"])} tone="gold" /></Card>
+          <Card title="Areas of interest" icon={<Layers className="size-4" />}><Chips items={arr(v["interests"])} /></Card>
           <Card title="Availability" icon={<Clock className="size-4" />}>
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl bg-secondary p-4"><p className="text-xs text-muted-foreground">Available from</p><p className="mt-1 font-semibold text-foreground">{s(v.availability) || "—"}</p></div>
-              <div className="rounded-xl bg-secondary p-4"><p className="text-xs text-muted-foreground">Duration</p><p className="mt-1 font-semibold text-foreground">{s(v.duration) || "—"}</p></div>
+              <div className="rounded-xl bg-secondary p-4"><p className="text-xs text-muted-foreground">Available from</p><p className="mt-1 font-semibold text-foreground">{s(v["availability"]) || "—"}</p></div>
+              <div className="rounded-xl bg-secondary p-4"><p className="text-xs text-muted-foreground">Duration</p><p className="mt-1 font-semibold text-foreground">{s(v["duration"]) || "—"}</p></div>
             </div>
           </Card>
         </div>
@@ -212,28 +212,28 @@ function Student({ v }: { v: Values }) {
 function Organization({ v }: { v: Values }) {
   return (
     <div className="space-y-6">
-      <Hero icon={<Building2 className="size-7" />} eyebrow="Organization account" title={s(v.companyName)} subtitle={s(v.category)} badge="Company verification pending"
-        meta={<><Meta icon={<ShieldCheck className="size-4" />}>{s(v.rc)}</Meta><Meta icon={<Globe className="size-4" />}>{s(v.website)}</Meta></>} />
+      <Hero icon={<Building2 className="size-7" />} eyebrow="Organization account" title={s(v["companyName"])} subtitle={s(v["category"])} badge="Company verification pending"
+        meta={<><Meta icon={<ShieldCheck className="size-4" />}>{s(v["rc"])}</Meta><Meta icon={<Globe className="size-4" />}>{s(v["website"])}</Meta></>} />
       <div className="grid gap-4 sm:grid-cols-4">
-        <Stat label="Company size" value={s(v.size)} />
-        <Stat label="Founded" value={s(v.founded)} />
+        <Stat label="Company size" value={s(v["size"])} />
+        <Stat label="Founded" value={s(v["founded"])} />
         <Stat label="Verified staff" value="0" />
         <Stat label="Open roles" value="0" />
       </div>
       <div className="grid gap-6 md:grid-cols-3">
         <Card title="Company record" icon={<Building2 className="size-4" />} className="md:col-span-2">
           <div className="grid gap-x-8 sm:grid-cols-2">
-            <div><Row label="RC number" value={s(v.rc)} /><Row label="Category" value={s(v.category)} /><Row label="Permit" value={s(v.permit)} /></div>
-            <div><Row label="Website" value={s(v.website)} /><Row label="CAC certificate" value={s(v.cac)} /><Row label="Head office" value={s(v.address)} /></div>
+            <div><Row label="RC number" value={s(v["rc"])} /><Row label="Category" value={s(v["category"])} /><Row label="Permit" value={s(v["permit"])} /></div>
+            <div><Row label="Website" value={s(v["website"])} /><Row label="CAC certificate" value={s(v["cac"])} /><Row label="Head office" value={s(v["address"])} /></div>
           </div>
-          <div className="mt-5"><p className="mb-2 text-xs text-muted-foreground">Industry segments</p><Chips items={arr(v.segments)} tone="gold" /></div>
+          <div className="mt-5"><p className="mb-2 text-xs text-muted-foreground">Industry segments</p><Chips items={arr(v["segments"])} tone="gold" /></div>
         </Card>
         <Card title="Account admin" icon={<Users className="size-4" />}>
-          <p className="font-semibold text-foreground">{s(v.contactName) || "—"}</p>
-          <p className="text-sm text-muted-foreground">{s(v.contactRole)}</p>
+          <p className="font-semibold text-foreground">{s(v["contactName"]) || "—"}</p>
+          <p className="text-sm text-muted-foreground">{s(v["contactRole"])}</p>
           <div className="mt-4 space-y-2 text-sm text-foreground">
-            <Meta icon={<Mail className="size-4 text-primary" />}>{s(v.contactEmail)}</Meta>
-            <div><Meta icon={<Phone className="size-4 text-primary" />}>{s(v.contactPhone)}</Meta></div>
+            <Meta icon={<Mail className="size-4 text-primary" />}>{s(v["contactEmail"])}</Meta>
+            <div><Meta icon={<Phone className="size-4 text-primary" />}>{s(v["contactPhone"])}</Meta></div>
           </div>
         </Card>
       </div>
