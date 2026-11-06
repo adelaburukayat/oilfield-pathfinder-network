@@ -357,9 +357,10 @@ function Empty({ text }: { text: string }) {
 
 function About({ v, onEdit }: { v: Values; onEdit: () => void }) {
   const t = str(v["about"]);
+  const owner = useOwner();
   return (
     <Card title="About" icon={<FileText className="size-4" />} action={<IconBtn onClick={onEdit} label="Edit about"><Pencil className="size-3.5" /> Edit</IconBtn>}>
-      {t ? <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{t}</p> : <Empty text={useOwner() ? "Tell people who you are and what you do." : "No about section yet."} />}
+      {t ? <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{t}</p> : <Empty text={owner ? "Tell people who you are and what you do." : "No about section yet."} />}
     </Card>
   );
 }
@@ -454,6 +455,7 @@ function ActivityFeed({ v }: { v: Values }) {
 
 function Mentoring({ v, onEdit }: { v: Values; onEdit: () => void }) {
   const open = arr(v["mentoring"]);
+  const owner = useOwner();
   return (
     <Card title="Mentoring" icon={<HeartHandshake className="size-4" />} action={<IconBtn onClick={onEdit} label="Edit mentoring"><Pencil className="size-3.5" /> Edit</IconBtn>}>
       {open.length ? (
@@ -468,7 +470,7 @@ function Mentoring({ v, onEdit }: { v: Values; onEdit: () => void }) {
           <div><p className="mb-2 text-xs text-muted-foreground">Topics</p><Chips items={arr(v["mentorAreas"])} /></div>
           <div className="grid grid-cols-2 gap-3"><Mini label="Time available" value={str(v["mentorTime"]) || "—"} /><Mini label="Format" value={str(v["mentorFormat"]) || "—"} /></div>
         </div>
-      ) : <Empty text={useOwner() ? "Turn on mentoring to help students, interns or organization staff." : "Not open to mentoring right now."} />}
+      ) : <Empty text={owner ? "Turn on mentoring to help students, interns or organization staff." : "Not open to mentoring right now."} />}
     </Card>
   );
 }
