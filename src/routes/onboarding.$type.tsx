@@ -1,8 +1,8 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CloudUpload } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Check, CloudUpload, FileText, X } from "lucide-react";
 import { Logo, HelpLink } from "@/components/brand";
-import { PATHS, isPathType, missingRequired, saveProfile, type Field, type Values } from "@/lib/onboarding";
+import { PATHS, isPathType, missingRequired, readImage, saveProfile, type Field, type Values } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/onboarding/$type")({
   loader: ({ params }) => {
@@ -182,6 +182,39 @@ function FieldInput({ field, value, error, onChange }: { field: Field; value: Va
         })}
       </div>
     );
+  } else if (field.type === "image") {
+    control = (
+      <label htmlFor={id} className={`flex cursor-pointer items-center gap-5 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary ${error ? "border-destructive" : "border-input"}`}>
+        <span className={`grid size-20 shrink-0 place-items-center overflow-hidden bg-secondary text-primary ${field.label.includes("logo") ? "rounded-xl" : "rounded-full"}`}>
+          {str ? <img src={str} alt="" className="size-full object-cover" /> : <Camera className="size-6" />}
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-medium text-foreground">{str ? "Change photo" : "Click to upload"}</span>
+          <span className="block text-xs text-muted-foreground">{field.hint}</span>
+        </span>
+        <input id={id} type="file" accept="image/*" className="sr-only" onChange={async (e) => { const f = e.target.files?.[0]; if (f) onChange(await readImage(f, 500)); e.target.value = ""; }} />
+      </label>
+    );
+  } else if (field.type === "files") {
+    const files = Array.isArray(value) ? value : [];
+    control = (
+      <div className="space-y-2">
+        {files.map((n) => (
+          <div key={n} className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
+            <FileText className="size-4 text-gold" /><span className="flex-1 truncate text-sm text-foreground">{n}</span>
+            <button type="button" aria-label={`Remove ${n}`} onClick={() => onChange(files.filter((x) => x !== n))} className="text-muted-foreground hover:text-destructive"><X className="size-4" /></button>
+          </div>
+        ))}
+        <label htmlFor={id} className={`flex cursor-pointer items-center gap-4 rounded-xl border border-dashed bg-card p-5 transition-colors hover:border-primary hover:bg-secondary/40 ${error ? "border-destructive" : "border-input"}`}>
+          <span className="grid size-11 place-items-center rounded-lg bg-secondary text-primary"><CloudUpload className="size-5" /></span>
+          <span className="flex-1">
+            <span className="block text-sm font-medium text-foreground">{files.length ? "Add more certificates" : "Click to upload"}</span>
+            <span className="block text-xs text-muted-foreground">{field.hint} · PDF, JPG or PNG</span>
+          </span>
+          <input id={id} type="file" multiple className="sr-only" onChange={(e) => { const names = Array.from(e.target.files ?? []).map((f) => f.name); onChange([...files, ...names.filter((n) => !files.includes(n))]); e.target.value = ""; }} />
+        </label>
+      </div>
+    );
   } else if (field.type === "file") {
     control = (
       <label htmlFor={id} className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-input bg-card p-5 transition-colors hover:border-primary hover:bg-secondary/40">
@@ -203,7 +236,7 @@ function FieldInput({ field, value, error, onChange }: { field: Field; value: Va
         <label htmlFor={id} className="text-sm font-medium text-foreground">
           {field.label} {field.required && <span className="text-gold">*</span>}
         </label>
-        {field.hint && field.type !== "file" && <span className="text-xs text-muted-foreground">{field.hint}</span>}
+        {field.hint && !["file", "image", "files"].includes(field.type) && <span className="text-xs text-muted-foreground">{field.hint}</span>}
       </div>
       {control}
       {error && <p className="mt-1.5 text-xs text-destructive">This field is required</p>}
