@@ -13,10 +13,10 @@ export const Route = createFileRoute("/onboarding/$type")({
     const label = loaderData ? PATHS[loaderData.type].label : "Onboarding";
     return {
       meta: [
-        { title: `${label} onboarding — Energy Passport` },
-        { name: "description", content: `Complete your ${label} Energy Passport in a few short steps.` },
-        { property: "og:title", content: `${label} onboarding — Energy Passport` },
-        { property: "og:description", content: `Complete your ${label} Energy Passport.` },
+        { title: `${label} onboarding — Pathfinder` },
+        { name: "description", content: `Complete your ${label} Pathfinder profile in a few short steps.` },
+        { property: "og:title", content: `${label} onboarding — Pathfinder` },
+        { property: "og:description", content: `Complete your ${label} Pathfinder profile.` },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
       ],
@@ -67,7 +67,7 @@ function Onboarding() {
           <Logo inverted />
           <div className="mt-14">
             <span className="inline-flex items-center gap-2 rounded-full bg-ink-foreground/10 px-3 py-1 text-xs font-medium text-gold ring-1 ring-ink-foreground/15 backdrop-blur">
-              <Icon className="size-3.5" /> {path.label} passport
+              <Icon className="size-3.5" /> {path.label} profile
             </span>
           </div>
           <div className="mt-auto">

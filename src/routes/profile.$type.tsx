@@ -17,10 +17,10 @@ export const Route = createFileRoute("/profile/$type")({
     const label = loaderData ? PATHS[loaderData.type].label : "Profile";
     return {
       meta: [
-        { title: `${label} profile — Energy Passport` },
-        { name: "description", content: `Your ${label} Energy Passport profile.` },
-        { property: "og:title", content: `${label} profile — Energy Passport` },
-        { property: "og:description", content: `Your ${label} Energy Passport profile.` },
+        { title: `${label} profile — Pathfinder` },
+        { name: "description", content: `Your ${label} profile on Pathfinder.` },
+        { property: "og:title", content: `${label} profile — Pathfinder` },
+        { property: "og:description", content: `Your ${label} profile on Pathfinder.` },
         { property: "og:type", content: "profile" },
         { name: "twitter:card", content: "summary" },
       ],
@@ -389,7 +389,7 @@ function Documents({ v, update, preset }: { v: Values; update: (p: Values) => vo
 
 function ActivityFeed({ v }: { v: Values }) {
   const items = [
-    { t: "Profile created", d: "Your passport was submitted for verification." },
+    { t: "Profile created", d: "Your details were submitted for verification." },
     ...(str(v["avatar"]) ? [{ t: "Profile photo added", d: "Your profile is easier to recognise." }] : []),
     ...(str(v["cover"]) ? [{ t: "Cover photo added", d: "Your profile looks more complete." }] : []),
   ];
@@ -483,7 +483,7 @@ function TabBody({ type, tab, v, update, onEdit }: { type: PathType; tab: string
   // organization
   if (tab === "team") return (
     <ListSection title="Team members" icon={<Users className="size-4" />} items={list(v["team"])} onChange={(x) => update({ team: JSON.stringify(x) })}
-      emptyText="Invite staff so they can link their passports to your company."
+      emptyText="Invite staff so they can link their profiles to your company."
       fields={[{ name: "name", label: "Full name" }, { name: "email", label: "Work email" }, { name: "role", label: "Role" }]}
       render={(e) => (<div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary">{(e["name"] ?? "?").slice(0, 1).toUpperCase()}</span>
         <div><p className="font-medium text-foreground">{e["name"]}</p><p className="text-xs text-muted-foreground">{[e["role"], e["email"]].filter(Boolean).join(" · ")} · Invite sent</p></div></div>)} />
