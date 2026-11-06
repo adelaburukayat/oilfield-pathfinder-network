@@ -1,14 +1,15 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   BadgeCheck, MapPin, Phone, Camera, Pencil, Share2, X, Plus, Award, FileText, Briefcase,
   GraduationCap, Building2, Globe, Users, ShieldCheck, Mail, Layers, Target, Clock, Calendar,
-  Upload, Trash2, Eye, Activity, Check, Linkedin,
+  Upload, Trash2, Eye, Activity, Check, Linkedin, LayoutDashboard, HeartHandshake, MessageSquare, UserPlus, Clock3,
 } from "lucide-react";
 import { Logo, HelpLink } from "@/components/brand";
-import { PATHS, isPathType, loadProfile, saveProfile, type Field, type PathType, type Values } from "@/lib/onboarding";
+import { PATHS, isPathType, loadProfile, readImage, saveProfile, type Field, type PathType, type Values } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/profile/$type")({
+  validateSearch: (s: Record<string, unknown>): { view?: "public" } => (s["view"] === "public" ? { view: "public" } : {}),
   loader: ({ params }) => {
     if (!isPathType(params.type)) throw notFound();
     return { type: params.type };
@@ -17,10 +18,10 @@ export const Route = createFileRoute("/profile/$type")({
     const label = loaderData ? PATHS[loaderData.type].label : "Profile";
     return {
       meta: [
-        { title: `${label} profile — Energy Passport` },
-        { name: "description", content: `Your ${label} Energy Passport profile.` },
-        { property: "og:title", content: `${label} profile — Energy Passport` },
-        { property: "og:description", content: `Your ${label} Energy Passport profile.` },
+        { title: `${label} profile — Pathfinder` },
+        { name: "description", content: `Your ${label} profile on Pathfinder.` },
+        { property: "og:title", content: `${label} profile — Pathfinder` },
+        { property: "og:description", content: `Your ${label} profile on Pathfinder.` },
         { property: "og:type", content: "profile" },
         { name: "twitter:card", content: "summary" },
       ],
@@ -36,22 +37,9 @@ const list = (v: Values[string] | undefined): Entry[] => {
   try { return typeof v === "string" && v ? (JSON.parse(v) as Entry[]) : []; } catch { return []; }
 };
 
-/** Shrinks an uploaded image so it fits in browser storage. */
-function readImage(file: File, max: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
-      c.width = img.width * scale; c.height = img.height * scale;
-      c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height);
-      resolve(c.toDataURL("image/jpeg", 0.82));
-      URL.revokeObjectURL(img.src);
-    };
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
-  });
-}
+/** True when the person looking is the profile owner; false in the visitor view. */
+const OwnerCtx = createContext(true);
+const useOwner = () => useContext(OwnerCtx);
 
 /* ---------- tab + headline config per path ---------- */
 
@@ -59,7 +47,7 @@ type Tab = { id: string; label: string };
 const TABS: Record<PathType, Tab[]> = {
   professional: [
     { id: "overview", label: "Overview" }, { id: "experience", label: "Experience" },
-    { id: "certifications", label: "Certifications" }, { id: "documents", label: "Documents" }, { id: "activity", label: "Activity" },
+    { id: "certifications", label: "Certifications" }, { id: "mentoring", label: "Mentoring" }, { id: "documents", label: "Documents" }, { id: "activity", label: "Activity" },
   ],
   student: [
     { id: "overview", label: "Overview" }, { id: "education", label: "Education" },
@@ -105,6 +93,9 @@ function ProfilePage() {
   const [tab, setTab] = useState("overview");
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { view } = Route.useSearch();
+  const owner = view !== "public";
+  const PRIVATE_TABS = ["documents", "activity"];
   useEffect(() => { setV(loadProfile(type)); setTab("overview"); }, [type]);
 
   if (!v) return <div className="min-h-screen bg-background" />;
@@ -120,14 +111,22 @@ function ProfilePage() {
   const Icon = PATHS[type].icon;
 
   const share = async () => {
-    try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* ignore */ }
+    try { await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?view=public`); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* ignore */ }
   };
 
   return (
+    <OwnerCtx.Provider value={owner}>
     <div className="min-h-screen bg-muted/40">
+      {!owner && (
+        <div className="flex items-center justify-center gap-3 bg-ink px-4 py-2.5 text-sm text-ink-foreground">
+          <Eye className="size-4 text-gold" /> You're seeing this profile the way visitors see it.
+          <Link to="/profile/$type" params={{ type }} className="font-semibold text-gold underline-offset-4 hover:underline">Back to my profile</Link>
+        </div>
+      )}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/90 px-6 py-4 backdrop-blur md:px-10">
         <Logo />
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+          <Link to="/dashboard/$type" params={{ type }} className="hover:text-foreground">Dashboard</Link>
           <span className="font-medium text-foreground">Profile</span>
           <span>Opportunities</span><span>Network</span><span>Messages</span>
         </nav>
@@ -143,7 +142,14 @@ function ProfilePage() {
               <div className="-mt-14 flex items-end gap-5 md:-mt-16">
                 <Avatar src={str(v["avatar"])} fallback={<Icon className="size-10" />} square={type === "organization"} onChange={(d) => update({ avatar: d })} />
               </div>
+              {owner ? (
               <div className="flex flex-wrap gap-2 md:pb-1">
+                <Link to="/dashboard/$type" params={{ type }} className="inline-flex h-10 items-center gap-2 rounded-full bg-ink px-4 text-sm font-medium text-ink-foreground hover:bg-ink/90">
+                  <LayoutDashboard className="size-4 text-gold" /> Go to dashboard
+                </Link>
+                <Link to="/profile/$type" params={{ type }} search={{ view: "public" }} className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground hover:bg-muted">
+                  <Eye className="size-4" /> View as visitor
+                </Link>
                 <button onClick={share} className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground hover:bg-muted">
                   {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />} {copied ? "Link copied" : "Share"}
                 </button>
@@ -151,6 +157,12 @@ function ProfilePage() {
                   <Pencil className="size-4" /> Edit profile
                 </button>
               </div>
+              ) : (
+              <div className="flex flex-wrap gap-2 md:pb-1">
+                <button className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground hover:bg-muted"><MessageSquare className="size-4" /> Message</button>
+                <button className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lift hover:bg-primary-deep"><UserPlus className="size-4" /> {type === "organization" ? "Follow" : "Connect"}</button>
+              </div>
+              )}
             </div>
             <div className="mt-4">
               <div className="flex flex-wrap items-center gap-3">
@@ -171,7 +183,7 @@ function ProfilePage() {
             </div>
           </div>
           <div className="flex gap-1 overflow-x-auto border-t border-border px-4 md:px-6">
-            {TABS[type].map((t) => (
+            {TABS[type].filter((t) => owner || !PRIVATE_TABS.includes(t.id)).map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`relative whitespace-nowrap px-4 py-3.5 text-sm font-medium transition-colors ${tab === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                 {t.label}
@@ -183,9 +195,10 @@ function ProfilePage() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
-            <TabBody type={type} tab={tab} v={v} update={update} onEdit={() => setEditing(true)} />
+            <TabBody type={type} tab={!owner && PRIVATE_TABS.includes(tab) ? "overview" : tab} v={v} update={update} onEdit={() => setEditing(true)} />
           </div>
           <aside className="space-y-6">
+            {owner && (<>
             <Card title="Profile strength" icon={<Target className="size-4" />}>
               <div className="flex items-baseline justify-between">
                 <span className="font-display text-3xl font-semibold text-foreground">{comp.pct}%</span>
@@ -198,37 +211,63 @@ function ProfilePage() {
                 ))}
               </ul>
             </Card>
-            <Card title="Passport" icon={<ShieldCheck className="size-4" />}>
-              <div className="rounded-2xl bg-ink p-5 text-ink-foreground">
-                <p className="text-xs uppercase tracking-[0.14em] text-ink-foreground/50">Passport no.</p>
-                <p className="mt-1 font-mono tracking-wider text-gold">{passportNo(h.name + type)}</p>
-                <p className="mt-4 text-xs text-ink-foreground/60">Status</p>
-                <p className="text-sm">Pending review</p>
-              </div>
-            </Card>
-            <Card title="Profile insights" icon={<Eye className="size-4" />}>
+            </>)}
+            <Verification type={type} v={v} />
+            {type === "professional" && arr(v["mentoring"]).length > 0 && (
+              <Card title="Open to mentoring" icon={<HeartHandshake className="size-4" />}>
+                <ul className="space-y-2">{arr(v["mentoring"]).map((m) => <li key={m} className="flex items-center gap-2 text-sm text-foreground"><Check className="size-4 text-gold" />{m}</li>)}</ul>
+              </Card>
+            )}
+            {owner && <Card title="Profile insights" icon={<Eye className="size-4" />}>
               <div className="grid grid-cols-2 gap-3">
                 <Mini label="Profile views" value="0" /><Mini label="Search hits" value="0" />
                 <Mini label={type === "organization" ? "Applicants" : "Endorsements"} value="0" /><Mini label="Connections" value="0" />
               </div>
-            </Card>
+            </Card>}
           </aside>
         </div>
       </main>
 
-      {editing && <EditDrawer type={type} v={v} onClose={() => setEditing(false)} onSave={(p) => { update(p); setEditing(false); }} />}
+      {editing && owner && <EditDrawer type={type} v={v} onClose={() => setEditing(false)} onSave={(p) => { update(p); setEditing(false); }} />}
     </div>
+    </OwnerCtx.Provider>
   );
 }
 
-function passportNo(seed: string) {
-  return "EP-" + Math.abs([...seed].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 1000003, 7)).toString().padStart(6, "0").slice(0, 6);
+function Verification({ type, v }: { type: PathType; v: Values }) {
+  const items: { label: string; done: boolean }[] =
+    type === "professional" ? [
+      { label: "Profile photo", done: !!str(v["avatar"]) },
+      { label: "NIN", done: !!str(v["nin"]) && !!str(v["ninSlip"]) },
+      { label: `Certificates (${arr(v["certFiles"]).length})`, done: arr(v["certFiles"]).length > 0 },
+    ] : type === "student" ? [
+      { label: "Profile photo", done: !!str(v["avatar"]) },
+      { label: "Student ID", done: !!str(v["letter"]) },
+    ] : [
+      { label: "Company logo", done: !!str(v["avatar"]) },
+      { label: "CAC certificate", done: !!str(v["cac"]) },
+      { label: "RC number", done: !!str(v["rc"]) },
+    ];
+  return (
+    <Card title="Verification" icon={<ShieldCheck className="size-4" />}>
+      <ul className="space-y-3">
+        {items.map((i) => (
+          <li key={i.label} className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-foreground">{i.label}</span>
+            {i.done ? <span className="inline-flex items-center gap-1 text-xs font-medium text-gold"><Clock3 className="size-3.5" /> Under review</span>
+              : <span className="text-xs text-muted-foreground">Not submitted</span>}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
 }
 
 /* ---------- cover & avatar ---------- */
 
 function Cover({ src, onChange }: { src: string; onChange: (d: string) => void }) {
   const ref = useRef<HTMLInputElement>(null);
+  const owner = useOwner();
   return (
     <div className="group relative h-44 bg-ink md:h-56">
       {src ? <img src={src} alt="Cover" className="size-full object-cover" /> : (
@@ -237,10 +276,10 @@ function Cover({ src, onChange }: { src: string; onChange: (d: string) => void }
           <div className="absolute -bottom-24 right-10 size-72 rounded-full bg-gold/30 blur-3xl" />
         </div>
       )}
-      <button onClick={() => ref.current?.click()}
+      {owner && <button onClick={() => ref.current?.click()}
         className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full bg-background/90 px-3.5 py-2 text-xs font-semibold text-foreground shadow-card backdrop-blur hover:bg-background">
         <Camera className="size-4" /> {src ? "Change cover" : "Add cover photo"}
-      </button>
+      </button>}
       <input ref={ref} type="file" accept="image/*" className="sr-only"
         onChange={async (e) => { const f = e.target.files?.[0]; if (f) onChange(await readImage(f, 1600)); e.target.value = ""; }} />
     </div>
@@ -250,6 +289,12 @@ function Cover({ src, onChange }: { src: string; onChange: (d: string) => void }
 function Avatar({ src, fallback, square, onChange }: { src: string; fallback: ReactNode; square: boolean; onChange: (d: string) => void }) {
   const ref = useRef<HTMLInputElement>(null);
   const shape = square ? "rounded-2xl" : "rounded-full";
+  const owner = useOwner();
+  if (!owner) return (
+    <div className={`relative size-28 overflow-hidden ${shape} bg-secondary text-primary ring-4 ring-card shadow-lift md:size-32`}>
+      {src ? <img src={src} alt="Profile" className="size-full object-cover" /> : <span className="grid size-full place-items-center">{fallback}</span>}
+    </div>
+  );
   return (
     <button onClick={() => ref.current?.click()} aria-label="Change profile photo"
       className={`group relative size-28 overflow-hidden ${shape} bg-secondary text-primary ring-4 ring-card shadow-lift md:size-32`}>
@@ -278,6 +323,7 @@ function Card({ title, icon, children, action }: { title: string; icon: ReactNod
 }
 
 function IconBtn({ onClick, children, label }: { onClick: () => void; children: ReactNode; label: string }) {
+  if (!useOwner()) return null;
   return <button onClick={onClick} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-deep" aria-label={label}>{children}</button>;
 }
 
@@ -311,9 +357,10 @@ function Empty({ text }: { text: string }) {
 
 function About({ v, onEdit }: { v: Values; onEdit: () => void }) {
   const t = str(v["about"]);
+  const owner = useOwner();
   return (
     <Card title="About" icon={<FileText className="size-4" />} action={<IconBtn onClick={onEdit} label="Edit about"><Pencil className="size-3.5" /> Edit</IconBtn>}>
-      {t ? <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{t}</p> : <Empty text="Tell people who you are and what you do." />}
+      {t ? <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{t}</p> : <Empty text={owner ? "Tell people who you are and what you do." : "No about section yet."} />}
     </Card>
   );
 }
@@ -325,6 +372,7 @@ function ListSection({ title, icon, items, fields, onChange, render, emptyText }
   onChange: (items: Entry[]) => void; render: (e: Entry) => ReactNode; emptyText: string;
 }) {
   const [draft, setDraft] = useState<Entry | null>(null);
+  const owner = useOwner();
   return (
     <Card title={title} icon={icon} action={!draft && <IconBtn onClick={() => setDraft({})} label={`Add ${title}`}><Plus className="size-4" /> Add</IconBtn>}>
       {draft && (
@@ -346,7 +394,7 @@ function ListSection({ title, icon, items, fields, onChange, render, emptyText }
           {items.map((e, i) => (
             <li key={i} className="group flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
               <div className="min-w-0 flex-1">{render(e)}</div>
-              <button onClick={() => onChange(items.filter((_, j) => j !== i))} aria-label="Remove" className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"><Trash2 className="size-4" /></button>
+              {owner && <button onClick={() => onChange(items.filter((_, j) => j !== i))} aria-label="Remove" className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"><Trash2 className="size-4" /></button>}
             </li>
           ))}
         </ul>
@@ -389,7 +437,7 @@ function Documents({ v, update, preset }: { v: Values; update: (p: Values) => vo
 
 function ActivityFeed({ v }: { v: Values }) {
   const items = [
-    { t: "Profile created", d: "Your passport was submitted for verification." },
+    { t: "Profile created", d: "Your details were submitted for verification." },
     ...(str(v["avatar"]) ? [{ t: "Profile photo added", d: "Your profile is easier to recognise." }] : []),
     ...(str(v["cover"]) ? [{ t: "Cover photo added", d: "Your profile looks more complete." }] : []),
   ];
@@ -401,6 +449,28 @@ function ActivityFeed({ v }: { v: Values }) {
             <p className="text-sm font-medium text-foreground">{i.t}</p><p className="text-xs text-muted-foreground">{i.d}</p></li>
         ))}
       </ol>
+    </Card>
+  );
+}
+
+function Mentoring({ v, onEdit }: { v: Values; onEdit: () => void }) {
+  const open = arr(v["mentoring"]);
+  const owner = useOwner();
+  return (
+    <Card title="Mentoring" icon={<HeartHandshake className="size-4" />} action={<IconBtn onClick={onEdit} label="Edit mentoring"><Pencil className="size-3.5" /> Edit</IconBtn>}>
+      {open.length ? (
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {open.map((m) => (
+              <div key={m} className="rounded-xl bg-ink p-4 text-ink-foreground">
+                <HeartHandshake className="size-5 text-gold" /><p className="mt-2 text-sm font-semibold">{m}</p>
+              </div>
+            ))}
+          </div>
+          <div><p className="mb-2 text-xs text-muted-foreground">Topics</p><Chips items={arr(v["mentorAreas"])} /></div>
+          <div className="grid grid-cols-2 gap-3"><Mini label="Time available" value={str(v["mentorTime"]) || "—"} /><Mini label="Format" value={str(v["mentorFormat"]) || "—"} /></div>
+        </div>
+      ) : <Empty text={owner ? "Turn on mentoring to help students, interns or organization staff." : "Not open to mentoring right now."} />}
     </Card>
   );
 }
@@ -422,14 +492,24 @@ function TabBody({ type, tab, v, update, onEdit }: { type: PathType; tab: string
             {arr(v["certs"]).map((c) => (
               <li key={c} className="flex items-center gap-3 rounded-xl border border-border p-4">
                 <span className="grid size-10 place-items-center rounded-lg bg-gold-soft text-gold"><Award className="size-5" /></span>
-                <div><p className="text-sm font-semibold text-foreground">{c}</p><p className="text-xs text-muted-foreground">Awaiting certificate upload</p></div>
+                <div><p className="text-sm font-semibold text-foreground">{c}</p><p className="text-xs text-muted-foreground">Listed certification</p></div>
               </li>
             ))}
           </ul>
-        ) : <Empty text="Add certifications like BOSIET, HUET or IWCF." />}
+        ) : <Empty text="No certifications listed yet." />}
+        {arr(v["certFiles"]).length > 0 && (
+          <div className="mt-5">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-gold">Uploaded certificates</p>
+            <ul className="space-y-2">{arr(v["certFiles"]).map((n) => (
+              <li key={n} className="flex items-center gap-3 rounded-xl border border-border p-3 text-sm">
+                <FileText className="size-4 text-primary" /><span className="flex-1 truncate text-foreground">{n}</span><span className="text-xs font-medium text-gold">Under review</span>
+              </li>))}</ul>
+          </div>
+        )}
       </Card>
     );
-    if (tab === "documents") return <Documents v={v} update={update} preset={[{ key: "cv", label: "Curriculum vitae" }]} />;
+    if (tab === "mentoring") return <Mentoring v={v} onEdit={onEdit} />;
+    if (tab === "documents") return <Documents v={v} update={update} preset={[{ key: "cv", label: "Curriculum vitae" }, { key: "ninSlip", label: "NIN slip" }]} />;
     if (tab === "activity") return <ActivityFeed v={v} />;
     return (<>
       <About v={v} onEdit={onEdit} />
@@ -441,6 +521,7 @@ function TabBody({ type, tab, v, update, onEdit }: { type: PathType; tab: string
       <Card title="Disciplines" icon={<Layers className="size-4" />}><Chips items={arr(v["disciplines"])} /></Card>
       <Card title="Work environment" icon={<Globe className="size-4" />}><Chips items={arr(v["environment"])} tone="gold" /></Card>
       <Card title="Credentials" icon={<ShieldCheck className="size-4" />}><Row label="Licence no." value={str(v["license"])} /><Row label="LinkedIn" value={str(v["linkedin"])} /></Card>
+      <Mentoring v={v} onEdit={onEdit} />
     </>);
   }
 
@@ -483,7 +564,7 @@ function TabBody({ type, tab, v, update, onEdit }: { type: PathType; tab: string
   // organization
   if (tab === "team") return (
     <ListSection title="Team members" icon={<Users className="size-4" />} items={list(v["team"])} onChange={(x) => update({ team: JSON.stringify(x) })}
-      emptyText="Invite staff so they can link their passports to your company."
+      emptyText="Invite staff so they can link their profiles to your company."
       fields={[{ name: "name", label: "Full name" }, { name: "email", label: "Work email" }, { name: "role", label: "Role" }]}
       render={(e) => (<div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary">{(e["name"] ?? "?").slice(0, 1).toUpperCase()}</span>
         <div><p className="font-medium text-foreground">{e["name"]}</p><p className="text-xs text-muted-foreground">{[e["role"], e["email"]].filter(Boolean).join(" · ")} · Invite sent</p></div></div>)} />
@@ -523,7 +604,7 @@ function EditDrawer({ type, v, onClose, onSave }: { type: PathType; v: Values; o
     { name: "headlineText", label: "Headline", type: "text", placeholder: type === "organization" ? "e.g. Delivering safe offshore operations since 2008" : "e.g. Drilling engineer · Deepwater specialist" },
     { name: "about", label: type === "organization" ? "About the company" : "About you", type: "textarea" },
   ];
-  const sections = [{ id: "intro", title: "Intro", fields: intro }, ...PATHS[type].steps.map((s) => ({ ...s, fields: s.fields.filter((f) => f.type !== "file") }))];
+  const sections = [{ id: "intro", title: "Intro", fields: intro }, ...PATHS[type].steps.map((s) => ({ ...s, fields: s.fields.filter((f) => !["file", "image", "files"].includes(f.type)) }))];
   const set = (n: string, x: string | string[]) => setD((s) => ({ ...s, [n]: x }));
 
   return (

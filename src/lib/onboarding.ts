@@ -8,7 +8,7 @@ export type PathType = "professional" | "student" | "organization";
 export type Field = {
   name: string;
   label: string;
-  type: "text" | "email" | "tel" | "date" | "number" | "select" | "textarea" | "chips" | "file";
+  type: "text" | "email" | "tel" | "date" | "number" | "select" | "textarea" | "chips" | "file" | "image" | "files";
   placeholder?: string;
   options?: string[];
   required?: boolean;
@@ -58,12 +58,30 @@ export const PATHS: Record<PathType, PathConfig> = {
         ],
       },
       {
-        id: "credentials", title: "Credentials", description: "Add certifications to strengthen your passport.",
+        id: "credentials", title: "Credentials", description: "List the certifications and licences you hold.",
         fields: [
           { name: "certs", label: "Certifications", type: "chips", options: ["BOSIET", "HUET", "IWCF", "IADC WellSharp", "NEBOSH", "OPITO", "PMP", "COREN"] },
           { name: "license", label: "Professional licence number", type: "text", placeholder: "Optional", half: true },
           { name: "linkedin", label: "LinkedIn profile", type: "text", placeholder: "linkedin.com/in/…", half: true },
           { name: "cv", label: "Upload CV", type: "file", hint: "PDF or DOCX, up to 10MB" },
+        ],
+      },
+      {
+        id: "verification", title: "Verification", description: "Upload your photo, NIN and certificates so we can verify you.",
+        fields: [
+          { name: "avatar", label: "Profile photo", type: "image", required: true, hint: "A clear photo of your face" },
+          { name: "nin", label: "NIN (National Identification Number)", type: "text", placeholder: "11-digit NIN", required: true, half: true },
+          { name: "ninSlip", label: "NIN slip or card", type: "file", required: true, hint: "PDF, JPG or PNG" },
+          { name: "certFiles", label: "Certificates", type: "files", required: true, hint: "Upload every certificate you hold" },
+        ],
+      },
+      {
+        id: "mentoring", title: "Mentoring", description: "Would you like to share your experience with others?",
+        fields: [
+          { name: "mentoring", label: "I'm open to", type: "chips", options: ["Mentoring students & interns", "Mentoring organization staff"], hint: "Optional" },
+          { name: "mentorAreas", label: "Topics I can mentor on", type: "chips", options: disciplines },
+          { name: "mentorTime", label: "Time I can give", type: "select", options: ["1 hour a month", "2–4 hours a month", "Weekly sessions"], half: true },
+          { name: "mentorFormat", label: "Preferred format", type: "select", options: ["Virtual", "In person", "Both"], half: true },
         ],
       },
     ],
@@ -96,6 +114,7 @@ export const PATHS: Record<PathType, PathConfig> = {
           { name: "type", label: "Looking for", type: "chips", options: ["SIWES / IT", "Internship", "Graduate trainee", "Mentorship"] },
           { name: "availability", label: "Available from", type: "date", half: true },
           { name: "duration", label: "Preferred duration", type: "select", options: ["3 months", "6 months", "12 months"], half: true },
+          { name: "avatar", label: "Profile photo", type: "image", required: true, hint: "A clear photo of your face" },
           { name: "letter", label: "Student ID or introduction letter", type: "file", hint: "PDF, JPG or PNG" },
         ],
       },
@@ -108,11 +127,12 @@ export const PATHS: Record<PathType, PathConfig> = {
     description: "Register your company to verify talent, manage teams and post opportunities.",
     icon: Building2,
     image: organizationImg,
-    perks: ["Verify workforce", "Team passports", "Talent pipeline"],
+    perks: ["Verify workforce", "Team profiles", "Talent pipeline"],
     steps: [
       {
         id: "company", title: "Company details", description: "Your legal entity information.",
         fields: [
+          { name: "avatar", label: "Company logo", type: "image", required: true, hint: "Square PNG or JPG works best" },
           { name: "companyName", label: "Registered company name", type: "text", required: true },
           { name: "rc", label: "RC / Registration number", type: "text", placeholder: "RC 1234567", required: true, half: true },
           { name: "founded", label: "Year founded", type: "number", placeholder: "2010", half: true },
@@ -167,4 +187,21 @@ export function saveProfile(t: PathType, v: Values) {
 }
 export function loadProfile(t: PathType): Values {
   try { return JSON.parse(localStorage.getItem(key(t)) ?? "{}") as Values; } catch { return {}; }
+}
+
+/** Shrinks an uploaded image so it fits in browser storage. */
+export function readImage(file: File, max: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = img.width * scale; c.height = img.height * scale;
+      c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL("image/jpeg", 0.82));
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
 }

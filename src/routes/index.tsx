@@ -7,10 +7,10 @@ import { PATHS, PATH_ORDER, type PathType } from "@/lib/onboarding";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Choose your path — Energy Passport" },
-      { name: "description", content: "Create your Energy Passport as a professional, intern/student or organization in the oil and gas industry." },
-      { property: "og:title", content: "Choose your path — Energy Passport" },
-      { property: "og:description", content: "Start your verified oil and gas passport in minutes." },
+      { title: "Choose your path — Pathfinder" },
+      { name: "description", content: "Create your Pathfinder profile as a professional, intern/student or organization in the oil and gas industry." },
+      { property: "og:title", content: "Choose your path — Pathfinder" },
+      { property: "og:description", content: "Start your verified oil and gas profile in minutes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -40,7 +40,7 @@ function ChoosePath() {
           </span>
           <h1 className="mt-6 text-4xl font-semibold text-foreground md:text-5xl">Choose your path</h1>
           <p className="mt-4 text-base text-muted-foreground md:text-lg">
-            Select the option that best describes you. Your passport is tailored to each path.
+            Select the option that best describes you. Your profile is tailored to each path.
           </p>
         </div>
 
@@ -98,7 +98,7 @@ function ChoosePath() {
           >
             Continue{selected ? ` as ${PATHS[selected].label}` : ""} <ArrowRight className="size-4" />
           </button>
-          <p className="text-xs text-muted-foreground">You can add another path to your passport later.</p>
+          <p className="text-xs text-muted-foreground">You can add another path to your profile later.</p>
         </div>
       </main>
     </div>

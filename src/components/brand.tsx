@@ -11,7 +11,7 @@ export function Logo({ inverted = false }: { inverted?: boolean }) {
         </svg>
       </span>
       <span className={`font-display text-[15px] font-semibold tracking-tight ${inverted ? "text-ink-foreground" : "text-foreground"}`}>
-        Energy<span className="text-gold">Passport</span>
+        Path<span className="text-gold">finder</span>
       </span>
     </Link>
   );
