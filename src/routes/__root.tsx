@@ -78,9 +78,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Pathfinder" },
+      { title: "OilSwift" },
       { name: "description", content: "Verified profiles for oil and gas professionals, students and organizations." },
-      { property: "og:title", content: "Pathfinder" },
+      { property: "og:title", content: "OilSwift" },
       { property: "og:description", content: "Verified profiles for the oil and gas industry." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

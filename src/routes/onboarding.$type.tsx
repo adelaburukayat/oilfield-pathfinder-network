@@ -13,10 +13,10 @@ export const Route = createFileRoute("/onboarding/$type")({
     const label = loaderData ? PATHS[loaderData.type].label : "Onboarding";
     return {
       meta: [
-        { title: `${label} onboarding — Pathfinder` },
-        { name: "description", content: `Complete your ${label} Pathfinder profile in a few short steps.` },
-        { property: "og:title", content: `${label} onboarding — Pathfinder` },
-        { property: "og:description", content: `Complete your ${label} Pathfinder profile.` },
+        { title: `${label} onboarding — OilSwift` },
+        { name: "description", content: `Complete your ${label} OilSwift profile in a few short steps.` },
+        { property: "og:title", content: `${label} onboarding — OilSwift` },
+        { property: "og:description", content: `Complete your ${label} OilSwift profile.` },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
       ],
