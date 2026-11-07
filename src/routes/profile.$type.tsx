@@ -18,10 +18,10 @@ export const Route = createFileRoute("/profile/$type")({
     const label = loaderData ? PATHS[loaderData.type].label : "Profile";
     return {
       meta: [
-        { title: `${label} profile — Pathfinder` },
-        { name: "description", content: `Your ${label} profile on Pathfinder.` },
-        { property: "og:title", content: `${label} profile — Pathfinder` },
-        { property: "og:description", content: `Your ${label} profile on Pathfinder.` },
+        { title: `${label} profile — OilSwift` },
+        { name: "description", content: `Your ${label} profile on OilSwift.` },
+        { property: "og:title", content: `${label} profile — OilSwift` },
+        { property: "og:description", content: `Your ${label} profile on OilSwift.` },
         { property: "og:type", content: "profile" },
         { name: "twitter:card", content: "summary" },
       ],

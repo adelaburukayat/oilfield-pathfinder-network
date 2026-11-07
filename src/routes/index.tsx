@@ -7,9 +7,9 @@ import { PATHS, PATH_ORDER, type PathType } from "@/lib/onboarding";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Choose your path — Pathfinder" },
-      { name: "description", content: "Create your Pathfinder profile as a professional, intern/student or organization in the oil and gas industry." },
-      { property: "og:title", content: "Choose your path — Pathfinder" },
+      { title: "Choose your path — OilSwift" },
+      { name: "description", content: "Create your OilSwift profile as a professional, intern/student or organization in the oil and gas industry." },
+      { property: "og:title", content: "Choose your path — OilSwift" },
       { property: "og:description", content: "Start your verified oil and gas profile in minutes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

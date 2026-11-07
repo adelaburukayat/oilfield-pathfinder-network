@@ -13,10 +13,10 @@ export const Route = createFileRoute("/dashboard/$type")({
     const label = loaderData ? PATHS[loaderData.type].label : "Account";
     return {
       meta: [
-        { title: `${label} dashboard — Pathfinder` },
-        { name: "description", content: `Your ${label} dashboard on Pathfinder: activity, opportunities and next steps.` },
-        { property: "og:title", content: `${label} dashboard — Pathfinder` },
-        { property: "og:description", content: `Your ${label} dashboard on Pathfinder.` },
+        { title: `${label} dashboard — OilSwift` },
+        { name: "description", content: `Your ${label} dashboard on OilSwift: activity, opportunities and next steps.` },
+        { property: "og:title", content: `${label} dashboard — OilSwift` },
+        { property: "og:description", content: `Your ${label} dashboard on OilSwift.` },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary" },
       ],
