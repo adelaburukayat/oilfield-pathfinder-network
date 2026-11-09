@@ -8,7 +8,7 @@ export type PathType = "professional" | "student" | "organization";
 export type Field = {
   name: string;
   label: string;
-  type: "text" | "email" | "tel" | "date" | "number" | "select" | "textarea" | "chips" | "file" | "image" | "files";
+  type: "text" | "email" | "tel" | "date" | "number" | "select" | "textarea" | "chips" | "streams" | "file" | "image" | "files";
   placeholder?: string;
   options?: string[];
   required?: boolean;
@@ -33,6 +33,11 @@ const disciplines = [
   "Drilling", "Reservoir", "Production", "Petroleum Engineering", "Geoscience",
   "HSE", "Pipeline & Facilities", "Process Engineering", "Instrumentation", "Supply Chain",
 ];
+export const STREAMS: Record<string, string[]> = {
+  Upstream: ["Drilling", "Reservoir Engineering", "Production Engineering", "Geology & Geophysics", "Well Completion", "Well Intervention", "Petrophysics", "Subsea Engineering", "Rig Operations"],
+  Midstream: ["Pipeline Engineering", "Gas Processing", "Storage & Terminals", "LNG Operations", "Transportation & Logistics", "Pipeline Integrity", "Compression Stations", "Metering & Custody Transfer"],
+  Downstream: ["Refining", "Process Engineering", "Petrochemicals", "Retail & Marketing", "Distribution", "Quality Control & Lab", "Product Trading", "Depot Operations"],
+};
 const countries = ["Nigeria", "Ghana", "Angola", "United Kingdom", "United States", "UAE", "Norway", "Other"];
 
 export const PATHS: Record<PathType, PathConfig> = {
@@ -53,7 +58,7 @@ export const PATHS: Record<PathType, PathConfig> = {
           { name: "jobTitle", label: "Current job title", type: "text", placeholder: "e.g. Senior Drilling Engineer", required: true },
           { name: "employer", label: "Current employer", type: "text", half: true },
           { name: "years", label: "Years of experience", type: "select", options: ["0–2", "3–5", "6–10", "11–15", "15+"], required: true, half: true },
-          { name: "disciplines", label: "Disciplines", type: "chips", options: disciplines, required: true, hint: "Select all that apply" },
+          { name: "disciplines", label: "Sector & roles", type: "streams", required: true, hint: "Pick a stream, then choose your roles" },
           { name: "environment", label: "Work environment", type: "chips", options: ["Onshore", "Offshore", "Deepwater", "Office-based"] },
         ],
       },
@@ -110,7 +115,7 @@ export const PATHS: Record<PathType, PathConfig> = {
       {
         id: "goals", title: "Interests & goals", description: "Help us match you with the right opportunities.",
         fields: [
-          { name: "interests", label: "Areas of interest", type: "chips", options: disciplines, required: true },
+          { name: "interests", label: "Areas of interest", type: "streams", required: true, hint: "Pick a stream, then choose the roles you want to explore" },
           { name: "type", label: "Looking for", type: "chips", options: ["SIWES / IT", "Internship", "Graduate trainee", "Mentorship"] },
           { name: "availability", label: "Available from", type: "date", half: true },
           { name: "duration", label: "Preferred duration", type: "select", options: ["3 months", "6 months", "12 months"], half: true },
@@ -143,7 +148,7 @@ export const PATHS: Record<PathType, PathConfig> = {
       {
         id: "operations", title: "Operations", description: "Where and how you operate.",
         fields: [
-          { name: "segments", label: "Industry segments", type: "chips", options: ["Upstream", "Midstream", "Downstream", "Gas", "Renewables"], required: true },
+          { name: "segments", label: "Sectors & services", type: "streams", required: true, hint: "Pick each stream you operate in, then the services you offer" },
           { name: "permit", label: "NUPRC / NMDPRA permit number", type: "text", placeholder: "Optional", half: true },
           { name: "website", label: "Website", type: "text", placeholder: "company.com", half: true },
           { name: "address", label: "Head office address", type: "textarea", required: true },
