@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Camera, Check, CloudUpload, FileText, X } from "lucide-react";
 import { Logo, HelpLink } from "@/components/brand";
-import { PATHS, isPathType, missingRequired, readImage, saveProfile, type Field, type Values } from "@/lib/onboarding";
+import { PATHS, isPathType, missingRequired, readImage, saveProfile, STREAMS, type Field, type Values } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/onboarding/$type")({
   loader: ({ params }) => {
@@ -182,6 +182,8 @@ function FieldInput({ field, value, error, onChange }: { field: Field; value: Va
         })}
       </div>
     );
+  } else if (field.type === "streams") {
+    control = <StreamPicker value={Array.isArray(value) ? value : []} error={error} onChange={onChange} />;
   } else if (field.type === "image") {
     control = (
       <label htmlFor={id} className={`flex cursor-pointer items-center gap-5 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary ${error ? "border-destructive" : "border-input"}`}>
@@ -244,3 +246,34 @@ function FieldInput({ field, value, error, onChange }: { field: Field; value: Va
   );
 }
 
+
+function StreamPicker({ value, error, onChange }: { value: string[]; error: boolean; onChange: (v: string[]) => void }) {
+  const names = Object.keys(STREAMS);
+  const [active, setActive] = useState(names[0]!);
+  const count = (s: string) => value.filter((x) => x.startsWith(`${s} · `)).length;
+  return (
+    <div className={`rounded-xl border bg-card p-3 ${error ? "border-destructive/60" : "border-input"}`}>
+      <div role="tablist" className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
+        {names.map((s) => (
+          <button key={s} type="button" role="tab" aria-selected={active === s} onClick={() => setActive(s)}
+            className={`flex h-9 items-center justify-center gap-1.5 rounded-md text-sm font-medium transition-all ${active === s ? "bg-ink text-ink-foreground shadow-card" : "text-muted-foreground hover:text-foreground"}`}>
+            {s}
+            {count(s) > 0 && <span className="grid size-5 place-items-center rounded-full bg-gold text-[11px] text-ink">{count(s)}</span>}
+          </button>
+        ))}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {STREAMS[active]!.map((r) => {
+          const key = `${active} · ${r}`;
+          const on = value.includes(key);
+          return (
+            <button type="button" key={key} aria-pressed={on} onClick={() => onChange(on ? value.filter((x) => x !== key) : [...value, key])}
+              className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm transition-all ${on ? "border-primary bg-secondary text-secondary-foreground" : "border-input bg-card text-foreground hover:border-primary/50"}`}>
+              {on && <Check className="size-3.5" strokeWidth={3} />} {r}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
