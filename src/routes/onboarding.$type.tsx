@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Camera, Check, CloudUpload, FileText, X } from "lucide-react";
 import { Logo, HelpLink } from "@/components/brand";
-import { PATHS, isPathType, missingRequired, readImage, saveProfile, type Field, type Values } from "@/lib/onboarding";
+import { PATHS, isPathType, missingRequired, readImage, saveProfile, STREAMS, type Field, type Values } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/onboarding/$type")({
   loader: ({ params }) => {
