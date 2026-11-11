@@ -490,7 +490,6 @@ function Overview({ type, v, update, onEdit }: { type: PathType; v: Values; upda
         <p className="text-sm text-muted-foreground">{e["location"]}</p>{e["summary"] && <p className="mt-2 text-sm text-foreground">{e["summary"]}</p>}<p className="mt-2 text-xs text-muted-foreground">0 applicants</p></>)} />
   </>);
 }
-}
 
 /* ---------- edit drawer ---------- */
 
