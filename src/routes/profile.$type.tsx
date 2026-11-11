@@ -41,23 +41,7 @@ const list = (v: Values[string] | undefined): Entry[] => {
 const OwnerCtx = createContext(true);
 const useOwner = () => useContext(OwnerCtx);
 
-/* ---------- tab + headline config per path ---------- */
-
-type Tab = { id: string; label: string };
-const TABS: Record<PathType, Tab[]> = {
-  professional: [
-    { id: "overview", label: "Overview" }, { id: "experience", label: "Experience" },
-    { id: "certifications", label: "Certifications" }, { id: "mentoring", label: "Mentoring" }, { id: "documents", label: "Documents" }, { id: "activity", label: "Activity" },
-  ],
-  student: [
-    { id: "overview", label: "Overview" }, { id: "education", label: "Education" },
-    { id: "projects", label: "Projects & skills" }, { id: "opportunities", label: "Opportunities" }, { id: "documents", label: "Documents" },
-  ],
-  organization: [
-    { id: "overview", label: "Overview" }, { id: "team", label: "Team" },
-    { id: "jobs", label: "Jobs" }, { id: "documents", label: "Documents" }, { id: "activity", label: "Activity" },
-  ],
-};
+/* ---------- headline config per path ---------- */
 
 function headline(type: PathType, v: Values) {
   if (type === "professional") return { name: str(v["displayName"]) || "Your name", sub: [str(v["jobTitle"]), str(v["employer"])].filter(Boolean).join(" · ") };
@@ -90,13 +74,11 @@ const LABELS: Record<string, string> = {
 function ProfilePage() {
   const { type } = Route.useLoaderData();
   const [v, setV] = useState<Values | null>(null);
-  const [tab, setTab] = useState("overview");
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const { view } = Route.useSearch();
   const owner = view !== "public";
-  const PRIVATE_TABS = ["documents", "activity"];
-  useEffect(() => { setV(loadProfile(type)); setTab("overview"); }, [type]);
+  useEffect(() => { setV(loadProfile(type)); }, [type]);
 
   if (!v) return <div className="min-h-screen bg-background" />;
 
@@ -116,14 +98,14 @@ function ProfilePage() {
 
   return (
     <OwnerCtx.Provider value={owner}>
-    <div className="min-h-screen bg-muted/40">
+    <div className="min-h-screen bg-white">
       {!owner && (
         <div className="flex items-center justify-center gap-3 bg-ink px-4 py-2.5 text-sm text-ink-foreground">
           <Eye className="size-4 text-gold" /> You're seeing this profile the way visitors see it.
           <Link to="/profile/$type" params={{ type }} className="font-semibold text-gold underline-offset-4 hover:underline">Back to my profile</Link>
         </div>
       )}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/90 px-6 py-4 backdrop-blur md:px-10">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-white/90 px-6 py-4 backdrop-blur md:px-10">
         <Logo />
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <Link to="/dashboard/$type" params={{ type }} className="hover:text-foreground">Dashboard</Link>
@@ -182,20 +164,11 @@ function ProfilePage() {
               </div>
             </div>
           </div>
-          <div className="flex gap-1 overflow-x-auto border-t border-border px-4 md:px-6">
-            {TABS[type].filter((t) => owner || !PRIVATE_TABS.includes(t.id)).map((t) => (
-              <button key={t.id} onClick={() => setTab(t.id)}
-                className={`relative whitespace-nowrap px-4 py-3.5 text-sm font-medium transition-colors ${tab === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                {t.label}
-                {tab === t.id && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-gold" />}
-              </button>
-            ))}
-          </div>
         </section>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
-            <TabBody type={type} tab={!owner && PRIVATE_TABS.includes(tab) ? "overview" : tab} v={v} update={update} onEdit={() => setEditing(true)} />
+            <Overview type={type} v={v} update={update} onEdit={() => setEditing(true)} />
           </div>
           <aside className="space-y-6">
             {owner && (<>
@@ -405,53 +378,7 @@ function ListSection({ title, icon, items, fields, onChange, render, emptyText }
 
 /* ---------- documents ---------- */
 
-function Documents({ v, update, preset }: { v: Values; update: (p: Values) => void; preset: { key: string; label: string }[] }) {
-  const docs = list(v["docs"]);
-  const ref = useRef<HTMLInputElement>(null);
-  return (
-    <Card title="Documents" icon={<FileText className="size-4" />} action={<IconBtn onClick={() => ref.current?.click()} label="Upload document"><Upload className="size-4" /> Upload</IconBtn>}>
-      <input ref={ref} type="file" className="sr-only" onChange={(e) => {
-        const f = e.target.files?.[0];
-        if (f) update({ docs: JSON.stringify([{ name: f.name, size: `${Math.max(1, Math.round(f.size / 1024))} KB`, date: new Date().toLocaleDateString() }, ...docs]) });
-        e.target.value = "";
-      }} />
-      <ul className="space-y-3">
-        {preset.map((p) => (
-          <li key={p.key} className="flex items-center gap-3 rounded-xl border border-border p-3">
-            <span className="grid size-10 place-items-center rounded-lg bg-secondary text-primary"><FileText className="size-4" /></span>
-            <div className="flex-1"><p className="text-sm font-medium text-foreground">{p.label}</p><p className="text-xs text-muted-foreground">{str(v[p.key]) || "Not uploaded"}</p></div>
-            {str(v[p.key]) ? <span className="text-xs font-medium text-gold">Under review</span> : <span className="text-xs text-muted-foreground">Missing</span>}
-          </li>
-        ))}
-        {docs.map((d, i) => (
-          <li key={i} className="flex items-center gap-3 rounded-xl border border-border p-3">
-            <span className="grid size-10 place-items-center rounded-lg bg-gold-soft text-gold"><FileText className="size-4" /></span>
-            <div className="flex-1"><p className="text-sm font-medium text-foreground">{d["name"]}</p><p className="text-xs text-muted-foreground">{d["size"]} · {d["date"]}</p></div>
-            <button onClick={() => update({ docs: JSON.stringify(docs.filter((_, j) => j !== i)) })} aria-label="Remove" className="text-muted-foreground hover:text-destructive"><Trash2 className="size-4" /></button>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
 
-function ActivityFeed({ v }: { v: Values }) {
-  const items = [
-    { t: "Profile created", d: "Your details were submitted for verification." },
-    ...(str(v["avatar"]) ? [{ t: "Profile photo added", d: "Your profile is easier to recognise." }] : []),
-    ...(str(v["cover"]) ? [{ t: "Cover photo added", d: "Your profile looks more complete." }] : []),
-  ];
-  return (
-    <Card title="Activity" icon={<Activity className="size-4" />}>
-      <ol className="relative space-y-5 border-l border-border pl-5">
-        {items.map((i) => (
-          <li key={i.t} className="relative"><span className="absolute -left-[26px] top-1 size-3 rounded-full bg-gold ring-4 ring-card" />
-            <p className="text-sm font-medium text-foreground">{i.t}</p><p className="text-xs text-muted-foreground">{i.d}</p></li>
-        ))}
-      </ol>
-    </Card>
-  );
-}
 
 function Mentoring({ v, onEdit }: { v: Values; onEdit: () => void }) {
   const open = arr(v["mentoring"]);
@@ -475,17 +402,22 @@ function Mentoring({ v, onEdit }: { v: Values; onEdit: () => void }) {
   );
 }
 
-/* ---------- tab bodies ---------- */
+/* ---------- overview ---------- */
 
-function TabBody({ type, tab, v, update, onEdit }: { type: PathType; tab: string; v: Values; update: (p: Values) => void; onEdit: () => void }) {
-  if (type === "professional") {
-    if (tab === "experience") return (
+function Overview({ type, v, update, onEdit }: { type: PathType; v: Values; update: (p: Values) => void; onEdit: () => void }) {
+  if (type === "professional") return (<>
+      <About v={v} onEdit={onEdit} />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Mini label="Years of experience" value={str(v["years"]) || "—"} />
+        <Mini label="Certifications" value={String(arr(v["certs"]).length)} />
+        <Mini label="Roles listed" value={String(list(v["experience"]).length)} />
+      </div>
+      <Card title="Sector & roles" icon={<Layers className="size-4" />}><Chips items={arr(v["disciplines"])} /></Card>
+      <Card title="Work environment" icon={<Globe className="size-4" />}><Chips items={arr(v["environment"])} tone="gold" /></Card>
       <ListSection title="Experience" icon={<Briefcase className="size-4" />} items={list(v["experience"])} onChange={(x) => update({ experience: JSON.stringify(x) })}
         emptyText="Add the roles, rigs and projects you've worked on."
         fields={[{ name: "role", label: "Role" }, { name: "company", label: "Company" }, { name: "period", label: "Period (e.g. 2019 – 2023)" }, { name: "location", label: "Location / asset" }, { name: "summary", label: "What you did", area: true }]}
         render={(e) => (<><p className="font-semibold text-foreground">{e["role"]}</p><p className="text-sm text-muted-foreground">{[e["company"], e["location"]].filter(Boolean).join(" · ")}</p><p className="text-xs text-muted-foreground">{e["period"]}</p>{e["summary"] && <p className="mt-2 text-sm text-foreground">{e["summary"]}</p>}</>)} />
-    );
-    if (tab === "certifications") return (
       <Card title="Certification vault" icon={<Award className="size-4" />} action={<IconBtn onClick={onEdit} label="Edit certifications"><Pencil className="size-3.5" /> Edit</IconBtn>}>
         {arr(v["certs"]).length ? (
           <ul className="grid gap-3 sm:grid-cols-2">
@@ -507,26 +439,15 @@ function TabBody({ type, tab, v, update, onEdit }: { type: PathType; tab: string
           </div>
         )}
       </Card>
-    );
-    if (tab === "mentoring") return <Mentoring v={v} onEdit={onEdit} />;
-    if (tab === "documents") return <Documents v={v} update={update} preset={[{ key: "cv", label: "Curriculum vitae" }, { key: "ninSlip", label: "NIN slip" }]} />;
-    if (tab === "activity") return <ActivityFeed v={v} />;
-    return (<>
+      {arr(v["mentoring"]).length > 0 && <Mentoring v={v} onEdit={onEdit} />}
+      <Card title="Credentials" icon={<ShieldCheck className="size-4" />}><Row label="Licence no." value={str(v["license"])} /><Row label="LinkedIn" value={str(v["linkedin"])} /></Card>
+    </>);
+
+  if (type === "student") return (<>
       <About v={v} onEdit={onEdit} />
       <div className="grid gap-4 sm:grid-cols-3">
-        <Mini label="Years of experience" value={str(v["years"]) || "—"} />
-        <Mini label="Certifications" value={String(arr(v["certs"]).length)} />
-        <Mini label="Roles listed" value={String(list(v["experience"]).length)} />
+        <Mini label="Level" value={str(v["level"]) || "—"} /><Mini label="Graduating" value={str(v["gradYear"]) || "—"} /><Mini label="Projects" value={String(list(v["projects"]).length)} />
       </div>
-      <Card title="Disciplines" icon={<Layers className="size-4" />}><Chips items={arr(v["disciplines"])} /></Card>
-      <Card title="Work environment" icon={<Globe className="size-4" />}><Chips items={arr(v["environment"])} tone="gold" /></Card>
-      <Card title="Credentials" icon={<ShieldCheck className="size-4" />}><Row label="Licence no." value={str(v["license"])} /><Row label="LinkedIn" value={str(v["linkedin"])} /></Card>
-      <Mentoring v={v} onEdit={onEdit} />
-    </>);
-  }
-
-  if (type === "student") {
-    if (tab === "education") return (
       <Card title="Education" icon={<GraduationCap className="size-4" />} action={<IconBtn onClick={onEdit} label="Edit education"><Pencil className="size-3.5" /> Edit</IconBtn>}>
         <div className="flex gap-4">
           <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-secondary text-primary"><GraduationCap className="size-6" /></span>
@@ -535,49 +456,14 @@ function TabBody({ type, tab, v, update, onEdit }: { type: PathType; tab: string
         </div>
         <div className="mt-4"><Row label="Student ID" value={str(v["matric"])} /></div>
       </Card>
-    );
-    if (tab === "projects") return (<>
+      <Card title="Areas of interest" icon={<Layers className="size-4" />}><Chips items={arr(v["interests"])} /></Card>
       <ListSection title="Projects" icon={<Layers className="size-4" />} items={list(v["projects"])} onChange={(x) => update({ projects: JSON.stringify(x) })}
         emptyText="Add class projects, field trips or research."
         fields={[{ name: "title", label: "Project title" }, { name: "where", label: "Course / organisation" }, { name: "summary", label: "Summary", area: true }]}
         render={(e) => (<><p className="font-semibold text-foreground">{e["title"]}</p><p className="text-sm text-muted-foreground">{e["where"]}</p>{e["summary"] && <p className="mt-2 text-sm text-foreground">{e["summary"]}</p>}</>)} />
-      <Card title="Areas of interest" icon={<Target className="size-4" />}><Chips items={arr(v["interests"])} /></Card>
-    </>);
-    if (tab === "opportunities") return (<>
       <Card title="Looking for" icon={<Target className="size-4" />}><Chips items={arr(v["type"])} tone="gold" /></Card>
-      <Card title="Availability" icon={<Clock className="size-4" />}>
-        <div className="grid grid-cols-2 gap-3"><Mini label="Available from" value={str(v["availability"]) || "—"} /><Mini label="Duration" value={str(v["duration"]) || "—"} /></div>
-      </Card>
-      <Card title="Recommended for you" icon={<Briefcase className="size-4" />}><Empty text="Matching internships will appear here once your profile is verified." /></Card>
     </>);
-    if (tab === "documents") return <Documents v={v} update={update} preset={[{ key: "letter", label: "Student ID / introduction letter" }]} />;
-    return (<>
-      <About v={v} onEdit={onEdit} />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Mini label="Level" value={str(v["level"]) || "—"} /><Mini label="Graduating" value={str(v["gradYear"]) || "—"} /><Mini label="Projects" value={String(list(v["projects"]).length)} />
-      </div>
-      <Card title="Areas of interest" icon={<Layers className="size-4" />}><Chips items={arr(v["interests"])} /></Card>
-      <Card title="Looking for" icon={<Calendar className="size-4" />}><Chips items={arr(v["type"])} tone="gold" /></Card>
-    </>);
-  }
 
-  // organization
-  if (tab === "team") return (
-    <ListSection title="Team members" icon={<Users className="size-4" />} items={list(v["team"])} onChange={(x) => update({ team: JSON.stringify(x) })}
-      emptyText="Invite staff so they can link their profiles to your company."
-      fields={[{ name: "name", label: "Full name" }, { name: "email", label: "Work email" }, { name: "role", label: "Role" }]}
-      render={(e) => (<div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary">{(e["name"] ?? "?").slice(0, 1).toUpperCase()}</span>
-        <div><p className="font-medium text-foreground">{e["name"]}</p><p className="text-xs text-muted-foreground">{[e["role"], e["email"]].filter(Boolean).join(" · ")} · Invite sent</p></div></div>)} />
-  );
-  if (tab === "jobs") return (
-    <ListSection title="Job openings" icon={<Briefcase className="size-4" />} items={list(v["jobs"])} onChange={(x) => update({ jobs: JSON.stringify(x) })}
-      emptyText="Post your first role to start receiving verified applicants."
-      fields={[{ name: "title", label: "Job title" }, { name: "location", label: "Location (e.g. Offshore, Bonny)" }, { name: "type", label: "Type (Full-time, Rotation, Contract)" }, { name: "summary", label: "Description", area: true }]}
-      render={(e) => (<><div className="flex items-center gap-2"><p className="font-semibold text-foreground">{e["title"]}</p>{e["type"] && <span className="rounded-full bg-gold-soft px-2 py-0.5 text-xs text-foreground">{e["type"]}</span>}</div>
-        <p className="text-sm text-muted-foreground">{e["location"]}</p>{e["summary"] && <p className="mt-2 text-sm text-foreground">{e["summary"]}</p>}<p className="mt-2 text-xs text-muted-foreground">0 applicants</p></>)} />
-  );
-  if (tab === "documents") return <Documents v={v} update={update} preset={[{ key: "cac", label: "CAC certificate" }]} />;
-  if (tab === "activity") return <ActivityFeed v={v} />;
   return (<>
     <About v={v} onEdit={onEdit} />
     <div className="grid gap-4 sm:grid-cols-4">
@@ -586,13 +472,24 @@ function TabBody({ type, tab, v, update, onEdit }: { type: PathType; tab: string
     </div>
     <Card title="Company record" icon={<Building2 className="size-4" />}>
       <Row label="RC number" value={str(v["rc"])} /><Row label="Permit" value={str(v["permit"])} /><Row label="Head office" value={str(v["address"])} />
-      <div className="mt-4"><p className="mb-2 text-xs text-muted-foreground">Industry segments</p><Chips items={arr(v["segments"])} tone="gold" /></div>
+      <div className="mt-4"><p className="mb-2 text-xs text-muted-foreground">Sectors & services</p><Chips items={arr(v["segments"])} tone="gold" /></div>
     </Card>
     <Card title="Account admin" icon={<Users className="size-4" />}>
       <p className="font-semibold text-foreground">{str(v["contactName"]) || "—"}</p><p className="text-sm text-muted-foreground">{str(v["contactRole"])}</p>
       {str(v["contactEmail"]) && <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-foreground"><Mail className="size-4 text-primary" />{str(v["contactEmail"])}</p>}
     </Card>
+    <ListSection title="Team members" icon={<Users className="size-4" />} items={list(v["team"])} onChange={(x) => update({ team: JSON.stringify(x) })}
+      emptyText="Invite staff so they can link their profiles to your company."
+      fields={[{ name: "name", label: "Full name" }, { name: "email", label: "Work email" }, { name: "role", label: "Role" }]}
+      render={(e) => (<div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-full bg-secondary text-sm font-semibold text-primary">{(e["name"] ?? "?").slice(0, 1).toUpperCase()}</span>
+        <div><p className="font-medium text-foreground">{e["name"]}</p><p className="text-xs text-muted-foreground">{[e["role"], e["email"]].filter(Boolean).join(" · ")} · Invite sent</p></div></div>)} />
+    <ListSection title="Job openings" icon={<Briefcase className="size-4" />} items={list(v["jobs"])} onChange={(x) => update({ jobs: JSON.stringify(x) })}
+      emptyText="Post your first role to start receiving verified applicants."
+      fields={[{ name: "title", label: "Job title" }, { name: "location", label: "Location (e.g. Offshore, Bonny)" }, { name: "type", label: "Type (Full-time, Rotation, Contract)" }, { name: "summary", label: "Description", area: true }]}
+      render={(e) => (<><div className="flex items-center gap-2"><p className="font-semibold text-foreground">{e["title"]}</p>{e["type"] && <span className="rounded-full bg-gold-soft px-2 py-0.5 text-xs text-foreground">{e["type"]}</span>}</div>
+        <p className="text-sm text-muted-foreground">{e["location"]}</p>{e["summary"] && <p className="mt-2 text-sm text-foreground">{e["summary"]}</p>}<p className="mt-2 text-xs text-muted-foreground">0 applicants</p></>)} />
   </>);
+}
 }
 
 /* ---------- edit drawer ---------- */
