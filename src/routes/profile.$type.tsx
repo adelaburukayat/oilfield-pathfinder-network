@@ -285,7 +285,7 @@ function Avatar({ src, fallback, square, onChange }: { src: string; fallback: Re
 
 function Card({ title, icon, children, action }: { title: string; icon: ReactNode; children: ReactNode; action?: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+    <section className="rounded-2xl border border-border bg-card p-6 shadow-card ring-1 ring-border">
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 font-semibold text-foreground"><span className="text-primary">{icon}</span>{title}</h2>
         {action}
