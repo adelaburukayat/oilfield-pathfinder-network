@@ -85,7 +85,7 @@
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
 }
 
-@utility shadow-card { box-shadow: var(--shadow-card); }
+@utility shadow-card { box-shadow: var(--shadow-card), var(--tw-ring-shadow, 0 0 0 0 transparent); }
 @utility shadow-lift { box-shadow: var(--shadow-lift); }
 @utility bg-ink-fade { background-image: var(--gradient-ink); }
 @utility bg-grid {
