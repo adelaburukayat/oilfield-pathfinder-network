@@ -1,11 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  BadgeCheck, MapPin, Phone, Camera, Pencil, Share2, X, Plus, Award, FileText, Briefcase,
-  GraduationCap, Building2, Globe, Users, ShieldCheck, Mail, Layers, Target, Clock, Calendar,
-  Upload, Trash2, Eye, Activity, Check, Linkedin, LayoutDashboard, HeartHandshake, MessageSquare, UserPlus, Clock3,
+  BadgeCheck, MapPin, Phone, Camera, Pencil, Share2, Plus, Award, FileText, Briefcase,
+  GraduationCap, Building2, Globe, Users, ShieldCheck, Mail, Layers, Target, Clock,
+  Trash2, Eye, Check, Linkedin, LayoutDashboard, HeartHandshake, MessageSquare, UserPlus, Clock3,
 } from "lucide-react";
 import { Logo, HelpLink } from "@/components/brand";
+import { AvatarDropdown } from "@/components/avatar-dropdown";
+import { Modal, Field, TextInput, TextArea, ChipSelect, SelectInput } from "@/components/modal";
 import { PATHS, isPathType, loadProfile, readImage, saveProfile, type Field, type PathType, type Values } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/profile/$type")({
@@ -69,12 +71,23 @@ const LABELS: Record<string, string> = {
   rc: "Add RC number", segments: "Choose segments", address: "Add head office", jobs: "Post a job", cac: "Upload CAC certificate",
 };
 
+const DISCIPLINES = [
+  "Drilling", "Reservoir", "Production", "Petroleum Engineering", "Geoscience",
+  "HSE", "Pipeline & Facilities", "Process Engineering", "Instrumentation", "Supply Chain",
+];
+
+/* ---------- modal edit targets ---------- */
+type EditTarget =
+  | "intro" | "about" | "experience" | "certifications" | "disciplines"
+  | "mentoring" | "credentials" | "education" | "interests" | "projects"
+  | "company" | "team" | "jobs" | "contact";
+
 /* ---------- page ---------- */
 
 function ProfilePage() {
   const { type } = Route.useLoaderData();
   const [v, setV] = useState<Values | null>(null);
-  const [editing, setEditing] = useState(false);
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [copied, setCopied] = useState(false);
   const { view } = Route.useSearch();
   const owner = view !== "public";
@@ -91,6 +104,7 @@ function ProfilePage() {
   const h = headline(type, v);
   const comp = completeness(type, v);
   const Icon = PATHS[type].icon;
+  const avatar = str(v["avatar"]);
 
   const share = async () => {
     try { await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?view=public`); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* ignore */ }
@@ -110,9 +124,12 @@ function ProfilePage() {
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <Link to="/dashboard/$type" params={{ type }} className="hover:text-foreground">Dashboard</Link>
           <span className="font-medium text-foreground">Profile</span>
-          <span>Opportunities</span><span>Network</span><span>Messages</span>
+          <Link to="/settings/$type" params={{ type }} className="hover:text-foreground">Settings</Link>
         </nav>
-        <span className="hidden sm:block"><HelpLink /></span>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:block"><HelpLink /></span>
+          {owner && <AvatarDropdown type={type} avatar={avatar} name={h.name} shape={type === "organization" ? "rounded-lg" : "rounded-full"} />}
+        </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">
@@ -135,8 +152,8 @@ function ProfilePage() {
                 <button onClick={share} className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground hover:bg-muted">
                   {copied ? <Check className="size-4 text-primary" /> : <Share2 className="size-4" />} {copied ? "Link copied" : "Share"}
                 </button>
-                <button onClick={() => setEditing(true)} className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lift hover:bg-primary-deep">
-                  <Pencil className="size-4" /> Edit profile
+                <button onClick={() => setEditTarget("intro")} className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lift hover:bg-primary-deep">
+                  <Pencil className="size-4" /> Edit intro
                 </button>
               </div>
               ) : (
@@ -157,7 +174,7 @@ function ProfilePage() {
               {h.sub && <p className="mt-1 text-sm text-muted-foreground">{h.sub}</p>}
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
                 {str(v["country"]) && <span className="inline-flex items-center gap-1.5"><MapPin className="size-4" />{str(v["country"])}</span>}
-                {str(v["phone"] ?? v["contactPhone"]) && <span className="inline-flex items-center gap-1.5"><Phone className="size-4" />{str(v["phone"] ?? v["contactPhone"])}</span>}
+                {owner && str(v["phone"] ?? v["contactPhone"]) && <span className="inline-flex items-center gap-1.5"><Phone className="size-4" />{str(v["phone"] ?? v["contactPhone"])}</span>}
                 {str(v["website"]) && <span className="inline-flex items-center gap-1.5"><Globe className="size-4" />{str(v["website"])}</span>}
                 {str(v["linkedin"]) && <span className="inline-flex items-center gap-1.5"><Linkedin className="size-4" />{str(v["linkedin"])}</span>}
                 <span className="inline-flex items-center gap-1.5"><Icon className="size-4" />{PATHS[type].label}</span>
@@ -168,7 +185,7 @@ function ProfilePage() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
-            <Overview type={type} v={v} update={update} onEdit={() => setEditing(true)} />
+            <Overview type={type} v={v} update={update} onEdit={(t) => setEditTarget(t)} />
           </div>
           <aside className="space-y-6">
             {owner && (<>
@@ -201,7 +218,9 @@ function ProfilePage() {
         </div>
       </main>
 
-      {editing && owner && <EditDrawer type={type} v={v} onClose={() => setEditing(false)} onSave={(p) => { update(p); setEditing(false); }} />}
+      {editTarget && owner && (
+        <EditModal target={editTarget} type={type} v={v} onClose={() => setEditTarget(null)} onSave={(p) => { update(p); setEditTarget(null); }} />
+      )}
     </div>
     </OwnerCtx.Provider>
   );
@@ -338,48 +357,6 @@ function About({ v, onEdit }: { v: Values; onEdit: () => void }) {
   );
 }
 
-/* ---------- list editor (experience, projects, jobs) ---------- */
-
-function ListSection({ title, icon, items, fields, onChange, render, emptyText }: {
-  title: string; icon: ReactNode; items: Entry[]; fields: { name: string; label: string; area?: boolean }[];
-  onChange: (items: Entry[]) => void; render: (e: Entry) => ReactNode; emptyText: string;
-}) {
-  const [draft, setDraft] = useState<Entry | null>(null);
-  const owner = useOwner();
-  return (
-    <Card title={title} icon={icon} action={!draft && <IconBtn onClick={() => setDraft({})} label={`Add ${title}`}><Plus className="size-4" /> Add</IconBtn>}>
-      {draft && (
-        <div className="mb-4 grid gap-3 rounded-xl border border-border bg-muted/40 p-4">
-          {fields.map((f) => f.area ? (
-            <textarea key={f.name} rows={3} placeholder={f.label} value={draft[f.name] ?? ""} onChange={(e) => setDraft({ ...draft, [f.name]: e.target.value })} className="field h-auto py-3" />
-          ) : (
-            <input key={f.name} placeholder={f.label} value={draft[f.name] ?? ""} onChange={(e) => setDraft({ ...draft, [f.name]: e.target.value })} className="field" />
-          ))}
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setDraft(null)} className="h-9 rounded-full px-4 text-sm text-muted-foreground hover:bg-muted">Cancel</button>
-            <button onClick={() => { if (Object.values(draft).some((x) => x.trim())) onChange([draft, ...items]); setDraft(null); }}
-              className="h-9 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-deep">Save</button>
-          </div>
-        </div>
-      )}
-      {items.length ? (
-        <ul className="divide-y divide-border">
-          {items.map((e, i) => (
-            <li key={i} className="group flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
-              <div className="min-w-0 flex-1">{render(e)}</div>
-              {owner && <button onClick={() => onChange(items.filter((_, j) => j !== i))} aria-label="Remove" className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"><Trash2 className="size-4" /></button>}
-            </li>
-          ))}
-        </ul>
-      ) : !draft && <Empty text={emptyText} />}
-    </Card>
-  );
-}
-
-/* ---------- documents ---------- */
-
-
-
 function Mentoring({ v, onEdit }: { v: Values; onEdit: () => void }) {
   const open = arr(v["mentoring"]);
   const owner = useOwner();
@@ -404,21 +381,25 @@ function Mentoring({ v, onEdit }: { v: Values; onEdit: () => void }) {
 
 /* ---------- overview ---------- */
 
-function Overview({ type, v, update, onEdit }: { type: PathType; v: Values; update: (p: Values) => void; onEdit: () => void }) {
+function Overview({ type, v, update, onEdit }: { type: PathType; v: Values; update: (p: Values) => void; onEdit: (t: EditTarget) => void }) {
   if (type === "professional") return (<>
-      <About v={v} onEdit={onEdit} />
+      <About v={v} onEdit={() => onEdit("about")} />
       <div className="grid gap-4 sm:grid-cols-3">
         <Mini label="Years of experience" value={str(v["years"]) || "—"} />
         <Mini label="Certifications" value={String(arr(v["certs"]).length)} />
         <Mini label="Roles listed" value={String(list(v["experience"]).length)} />
       </div>
-      <Card title="Sector & roles" icon={<Layers className="size-4" />}><Chips items={arr(v["disciplines"])} /></Card>
-      <Card title="Work environment" icon={<Globe className="size-4" />}><Chips items={arr(v["environment"])} tone="gold" /></Card>
+      <Card title="Sector & roles" icon={<Layers className="size-4" />} action={<IconBtn onClick={() => onEdit("disciplines")} label="Edit disciplines"><Pencil className="size-3.5" /> Edit</IconBtn>}>
+        <Chips items={arr(v["disciplines"])} />
+      </Card>
+      <Card title="Work environment" icon={<Globe className="size-4" />} action={<IconBtn onClick={() => onEdit("disciplines")} label="Edit work environment"><Pencil className="size-3.5" /> Edit</IconBtn>}>
+        <Chips items={arr(v["environment"])} tone="gold" />
+      </Card>
       <ListSection title="Experience" icon={<Briefcase className="size-4" />} items={list(v["experience"])} onChange={(x) => update({ experience: JSON.stringify(x) })}
         emptyText="Add the roles, rigs and projects you've worked on."
         fields={[{ name: "role", label: "Role" }, { name: "company", label: "Company" }, { name: "period", label: "Period (e.g. 2019 – 2023)" }, { name: "location", label: "Location / asset" }, { name: "summary", label: "What you did", area: true }]}
         render={(e) => (<><p className="font-semibold text-foreground">{e["role"]}</p><p className="text-sm text-muted-foreground">{[e["company"], e["location"]].filter(Boolean).join(" · ")}</p><p className="text-xs text-muted-foreground">{e["period"]}</p>{e["summary"] && <p className="mt-2 text-sm text-foreground">{e["summary"]}</p>}</>)} />
-      <Card title="Certification vault" icon={<Award className="size-4" />} action={<IconBtn onClick={onEdit} label="Edit certifications"><Pencil className="size-3.5" /> Edit</IconBtn>}>
+      <Card title="Certification vault" icon={<Award className="size-4" />} action={<IconBtn onClick={() => onEdit("certifications")} label="Edit certifications"><Pencil className="size-3.5" /> Edit</IconBtn>}>
         {arr(v["certs"]).length ? (
           <ul className="grid gap-3 sm:grid-cols-2">
             {arr(v["certs"]).map((c) => (
@@ -439,16 +420,18 @@ function Overview({ type, v, update, onEdit }: { type: PathType; v: Values; upda
           </div>
         )}
       </Card>
-      {arr(v["mentoring"]).length > 0 && <Mentoring v={v} onEdit={onEdit} />}
-      <Card title="Credentials" icon={<ShieldCheck className="size-4" />}><Row label="Licence no." value={str(v["license"])} /><Row label="LinkedIn" value={str(v["linkedin"])} /></Card>
+      {arr(v["mentoring"]).length > 0 && <Mentoring v={v} onEdit={() => onEdit("mentoring")} />}
+      <Card title="Credentials" icon={<ShieldCheck className="size-4" />} action={<IconBtn onClick={() => onEdit("credentials")} label="Edit credentials"><Pencil className="size-3.5" /> Edit</IconBtn>}>
+        <Row label="Licence no." value={str(v["license"])} /><Row label="LinkedIn" value={str(v["linkedin"])} />
+      </Card>
     </>);
 
   if (type === "student") return (<>
-      <About v={v} onEdit={onEdit} />
+      <About v={v} onEdit={() => onEdit("about")} />
       <div className="grid gap-4 sm:grid-cols-3">
         <Mini label="Level" value={str(v["level"]) || "—"} /><Mini label="Graduating" value={str(v["gradYear"]) || "—"} /><Mini label="Projects" value={String(list(v["projects"]).length)} />
       </div>
-      <Card title="Education" icon={<GraduationCap className="size-4" />} action={<IconBtn onClick={onEdit} label="Edit education"><Pencil className="size-3.5" /> Edit</IconBtn>}>
+      <Card title="Education" icon={<GraduationCap className="size-4" />} action={<IconBtn onClick={() => onEdit("education")} label="Edit education"><Pencil className="size-3.5" /> Edit</IconBtn>}>
         <div className="flex gap-4">
           <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-secondary text-primary"><GraduationCap className="size-6" /></span>
           <div><p className="font-semibold text-foreground">{str(v["institution"]) || "—"}</p><p className="text-sm text-muted-foreground">{str(v["course"])}</p>
@@ -456,25 +439,29 @@ function Overview({ type, v, update, onEdit }: { type: PathType; v: Values; upda
         </div>
         <div className="mt-4"><Row label="Student ID" value={str(v["matric"])} /></div>
       </Card>
-      <Card title="Areas of interest" icon={<Layers className="size-4" />}><Chips items={arr(v["interests"])} /></Card>
+      <Card title="Areas of interest" icon={<Layers className="size-4" />} action={<IconBtn onClick={() => onEdit("interests")} label="Edit interests"><Pencil className="size-3.5" /> Edit</IconBtn>}>
+        <Chips items={arr(v["interests"])} />
+      </Card>
       <ListSection title="Projects" icon={<Layers className="size-4" />} items={list(v["projects"])} onChange={(x) => update({ projects: JSON.stringify(x) })}
         emptyText="Add class projects, field trips or research."
         fields={[{ name: "title", label: "Project title" }, { name: "where", label: "Course / organisation" }, { name: "summary", label: "Summary", area: true }]}
         render={(e) => (<><p className="font-semibold text-foreground">{e["title"]}</p><p className="text-sm text-muted-foreground">{e["where"]}</p>{e["summary"] && <p className="mt-2 text-sm text-foreground">{e["summary"]}</p>}</>)} />
-      <Card title="Looking for" icon={<Target className="size-4" />}><Chips items={arr(v["type"])} tone="gold" /></Card>
+      <Card title="Looking for" icon={<Target className="size-4" />} action={<IconBtn onClick={() => onEdit("interests")} label="Edit goals"><Pencil className="size-3.5" /> Edit</IconBtn>}>
+        <Chips items={arr(v["type"])} tone="gold" />
+      </Card>
     </>);
 
   return (<>
-    <About v={v} onEdit={onEdit} />
+    <About v={v} onEdit={() => onEdit("about")} />
     <div className="grid gap-4 sm:grid-cols-4">
       <Mini label="Company size" value={str(v["size"]) || "—"} /><Mini label="Founded" value={str(v["founded"]) || "—"} />
       <Mini label="Team members" value={String(list(v["team"]).length)} /><Mini label="Open roles" value={String(list(v["jobs"]).length)} />
     </div>
-    <Card title="Company record" icon={<Building2 className="size-4" />}>
+    <Card title="Company record" icon={<Building2 className="size-4" />} action={<IconBtn onClick={() => onEdit("company")} label="Edit company record"><Pencil className="size-3.5" /> Edit</IconBtn>}>
       <Row label="RC number" value={str(v["rc"])} /><Row label="Permit" value={str(v["permit"])} /><Row label="Head office" value={str(v["address"])} />
       <div className="mt-4"><p className="mb-2 text-xs text-muted-foreground">Sectors & services</p><Chips items={arr(v["segments"])} tone="gold" /></div>
     </Card>
-    <Card title="Account admin" icon={<Users className="size-4" />}>
+    <Card title="Account admin" icon={<Users className="size-4" />} action={<IconBtn onClick={() => onEdit("contact")} label="Edit contact"><Pencil className="size-3.5" /> Edit</IconBtn>}>
       <p className="font-semibold text-foreground">{str(v["contactName"]) || "—"}</p><p className="text-sm text-muted-foreground">{str(v["contactRole"])}</p>
       {str(v["contactEmail"]) && <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-foreground"><Mail className="size-4 text-primary" />{str(v["contactEmail"])}</p>}
     </Card>
@@ -491,67 +478,220 @@ function Overview({ type, v, update, onEdit }: { type: PathType; v: Values; upda
   </>);
 }
 
-/* ---------- edit drawer ---------- */
+/* ---------- list editor (experience, projects, jobs, team) ---------- */
 
-function EditDrawer({ type, v, onClose, onSave }: { type: PathType; v: Values; onClose: () => void; onSave: (p: Values) => void }) {
-  const [d, setD] = useState<Values>(v);
-  const intro: Field[] = [
-    ...(type !== "organization" ? [{ name: "displayName", label: "Full name", type: "text" as const }] : []),
-    { name: "headlineText", label: "Headline", type: "text", placeholder: type === "organization" ? "e.g. Delivering safe offshore operations since 2008" : "e.g. Drilling engineer · Deepwater specialist" },
-    { name: "about", label: type === "organization" ? "About the company" : "About you", type: "textarea" },
-  ];
-  const sections = [{ id: "intro", title: "Intro", fields: intro }, ...PATHS[type].steps.map((s) => ({ ...s, fields: s.fields.filter((f) => !["file", "image", "files"].includes(f.type)) }))];
-  const set = (n: string, x: string | string[]) => setD((s) => ({ ...s, [n]: x }));
+function ListSection({ title, icon, items, fields, onChange, render, emptyText }: {
+  title: string; icon: ReactNode; items: Entry[]; fields: { name: string; label: string; area?: boolean }[];
+  onChange: (items: Entry[]) => void; render: (e: Entry) => ReactNode; emptyText: string;
+}) {
+  const [draft, setDraft] = useState<Entry | null>(null);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const owner = useOwner();
+
+  const startAdd = () => { setDraft({}); setEditIndex(null); };
+  const startEdit = (i: number) => { setDraft(items[i] ?? {}); setEditIndex(i); };
+  const saveDraft = () => {
+    if (!draft) return;
+    if (editIndex !== null) {
+      const next = items.map((it, j) => (j === editIndex ? draft : it));
+      onChange(next);
+    } else if (Object.values(draft).some((x) => x.trim())) {
+      onChange([draft, ...items]);
+    }
+    setDraft(null); setEditIndex(null);
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-ink/50 backdrop-blur-sm" />
-      <div className="relative flex h-full w-full max-w-xl flex-col bg-background shadow-lift animate-in slide-in-from-right duration-300">
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h2 className="font-display text-lg font-semibold text-foreground">Edit profile</h2>
-          <button onClick={onClose} aria-label="Close" className="rounded-full p-2 text-muted-foreground hover:bg-muted"><X className="size-5" /></button>
-        </div>
-        <div className="flex-1 space-y-8 overflow-y-auto px-6 py-6">
-          {sections.map((s) => (
-            <section key={s.id}>
-              <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-gold">{s.title}</h3>
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                {s.fields.map((f) => <EditField key={f.name} f={f} value={d[f.name]} onChange={(x) => set(f.name, x)} />)}
-              </div>
-            </section>
+    <Card title={title} icon={icon} action={!draft && <IconBtn onClick={startAdd} label={`Add ${title}`}><Plus className="size-4" /> Add</IconBtn>}>
+      {draft && (
+        <div className="mb-4 grid gap-3 rounded-xl border border-border bg-muted/40 p-4">
+          {fields.map((f) => f.area ? (
+            <textarea key={f.name} rows={3} placeholder={f.label} value={draft[f.name] ?? ""} onChange={(e) => setDraft({ ...draft, [f.name]: e.target.value })} className="field h-auto py-3" />
+          ) : (
+            <input key={f.name} placeholder={f.label} value={draft[f.name] ?? ""} onChange={(e) => setDraft({ ...draft, [f.name]: e.target.value })} className="field" />
           ))}
+          <div className="flex justify-end gap-2">
+            <button onClick={() => { setDraft(null); setEditIndex(null); }} className="h-9 rounded-full px-4 text-sm text-muted-foreground hover:bg-muted">Cancel</button>
+            <button onClick={saveDraft} className="h-9 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-deep">{editIndex !== null ? "Update" : "Add"}</button>
+          </div>
         </div>
-        <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
-          <button onClick={onClose} className="h-10 rounded-full px-5 text-sm font-medium text-muted-foreground hover:bg-muted">Cancel</button>
-          <button onClick={() => onSave(d)} className="h-10 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground hover:bg-primary-deep">Save changes</button>
-        </div>
-      </div>
-    </div>
+      )}
+      {items.length ? (
+        <ul className="divide-y divide-border">
+          {items.map((e, i) => (
+            <li key={i} className="group flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
+              <div className="min-w-0 flex-1">{render(e)}</div>
+              {owner && (
+                <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button onClick={() => startEdit(i)} className="text-muted-foreground hover:text-primary" aria-label="Edit"><Pencil className="size-4" /></button>
+                  <button onClick={() => onChange(items.filter((_, j) => j !== i))} aria-label="Remove" className="text-muted-foreground hover:text-destructive"><Trash2 className="size-4" /></button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : !draft && <Empty text={emptyText} />}
+    </Card>
   );
 }
 
-function EditField({ f, value, onChange }: { f: Field; value: Values[string] | undefined; onChange: (v: string | string[]) => void }) {
+/* ---------- section edit modals ---------- */
+
+function EditModal({ target, type, v, onClose, onSave }: {
+  target: EditTarget; type: PathType; v: Values; onClose: () => void; onSave: (p: Values) => void;
+}) {
+  const [d, setD] = useState<Values>(v);
+  const set = (n: string, x: string | string[]) => setD((s) => ({ ...s, [n]: x }));
+
+  const config = modalConfig(target, type);
+  if (!config) return null;
+
+  const handleSave = () => {
+    const patch: Values = {};
+    config.fields.forEach((f) => { patch[f.name] = d[f.name] ?? (f.type === "chips" || f.type === "streams" ? [] : ""); });
+    onSave(patch);
+  };
+
+  return (
+    <Modal open onClose={onClose} onSave={handleSave} title={config.title} subtitle={config.subtitle} saveLabel={config.saveLabel}>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+        {config.fields.map((f) => (
+          <ModalField key={f.name} f={f} value={d[f.name]} onChange={(x) => set(f.name, x)} />
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+function ModalField({ f, value, onChange }: { f: Field; value: Values[string] | undefined; onChange: (v: string | string[]) => void }) {
   const s = typeof value === "string" ? value : "";
   let control: ReactNode;
-  if (f.type === "select") control = (
-    <select value={s} onChange={(e) => onChange(e.target.value)} className="field"><option value="">Select…</option>{f.options?.map((o) => <option key={o}>{o}</option>)}</select>
-  );
-  else if (f.type === "textarea") control = <textarea rows={4} value={s} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} className="field h-auto py-3" />;
+  if (f.type === "select") control = <SelectInput value={s} onChange={onChange} options={f.options ?? []} />;
+  else if (f.type === "textarea") control = <TextArea value={s} onChange={onChange} placeholder={f.placeholder} rows={4} />;
   else if (f.type === "chips") {
     const a = Array.isArray(value) ? value : [];
-    control = (
-      <div className="flex flex-wrap gap-2">
-        {f.options?.map((o) => { const on = a.includes(o); return (
-          <button type="button" key={o} onClick={() => onChange(on ? a.filter((x) => x !== o) : [...a, o])}
-            className={`inline-flex h-8 items-center gap-1 rounded-full border px-3 text-sm ${on ? "border-primary bg-secondary text-secondary-foreground" : "border-input bg-card text-foreground hover:border-primary/50"}`}>
-            {on && <Check className="size-3.5" strokeWidth={3} />}{o}</button>); })}
-      </div>
-    );
-  } else control = <input type={f.type} value={s} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} className="field" />;
-  return (
-    <div className={f.half ? "col-span-2 sm:col-span-1" : "col-span-2"}>
-      <label className="mb-1.5 block text-sm font-medium text-foreground">{f.label}</label>
-      {control}
-    </div>
-  );
+    control = <ChipSelect options={f.options ?? []} value={a} onChange={onChange} />;
+  } else control = <TextInput value={s} onChange={onChange} placeholder={f.placeholder} type={f.type === "email" ? "email" : f.type === "tel" ? "tel" : f.type === "number" ? "number" : f.type === "date" ? "date" : "text"} />;
+  return <Field label={f.label} hint={f.hint} half={f.half}>{control}</Field>;
+}
+
+type ModalConfig = { title: string; subtitle?: string; saveLabel?: string; fields: Field[] };
+
+function modalConfig(target: EditTarget, type: PathType): ModalConfig | null {
+  const introFields: Field[] = type === "organization"
+    ? [
+        { name: "companyName", label: "Company name", type: "text" },
+        { name: "headlineText", label: "Headline", type: "text", placeholder: "e.g. Delivering safe offshore operations since 2008" },
+        { name: "category", label: "Category", type: "select", options: ["IOC", "Indigenous operator", "Marginal field operator", "Oilfield services", "EPC contractor", "Regulator / Agency", "Training provider"], half: true },
+        { name: "size", label: "Company size", type: "select", options: ["1–10", "11–50", "51–200", "201–1,000", "1,000+"], half: true },
+        { name: "founded", label: "Year founded", type: "number", half: true },
+        { name: "website", label: "Website", type: "text", placeholder: "company.com", half: true },
+        { name: "country", label: "Country", type: "select", options: ["Nigeria", "Ghana", "Angola", "United Kingdom", "United States", "UAE", "Norway", "Other"], half: true },
+      ]
+    : [
+        { name: "displayName", label: "Full name", type: "text" },
+        { name: "headlineText", label: "Headline", type: "text", placeholder: "e.g. Drilling engineer · Deepwater specialist" },
+        ...(type === "professional" ? [
+          { name: "jobTitle", label: "Current job title", type: "text", half: true } as Field,
+          { name: "employer", label: "Current employer", type: "text", half: true } as Field,
+          { name: "years", label: "Years of experience", type: "select", options: ["0–2", "3–5", "6–10", "11–15", "15+"], half: true } as Field,
+          { name: "country", label: "Country of residence", type: "select", options: ["Nigeria", "Ghana", "Angola", "United Kingdom", "United States", "UAE", "Norway", "Other"], half: true } as Field,
+          { name: "linkedin", label: "LinkedIn profile", type: "text", placeholder: "linkedin.com/in/…", half: true } as Field,
+        ] : [
+          { name: "course", label: "Course of study", type: "text", half: true } as Field,
+          { name: "institution", label: "Institution", type: "text", half: true } as Field,
+          { name: "country", label: "Country", type: "select", options: ["Nigeria", "Ghana", "Angola", "United Kingdom", "United States", "UAE", "Norway", "Other"], half: true } as Field,
+        ]),
+      ];
+
+  const aboutOnly: Field[] = [
+    { name: "headlineText", label: "Headline", type: "text", placeholder: type === "organization" ? "e.g. Delivering safe offshore operations since 2008" : "e.g. Drilling engineer · Deepwater specialist" },
+    { name: "about", label: type === "organization" ? "About the company" : "About you", type: "textarea" },
+  ];
+
+  switch (target) {
+    case "intro": return { title: "Edit intro", subtitle: "Update your name, headline and basic info.", fields: introFields };
+    case "about": return { title: "Edit about", subtitle: "Write a short professional summary.", fields: aboutOnly };
+    case "experience":
+      return { title: "Edit experience", subtitle: "Manage your work history.", fields: [], saveLabel: "Done" };
+    case "certifications":
+      return {
+        title: "Edit certifications", subtitle: "List the certifications you hold.",
+        fields: [
+          { name: "certs", label: "Certifications", type: "chips", options: ["BOSIET", "HUET", "IWCF", "IADC WellSharp", "NEBOSH", "OPITO", "PMP", "COREN"] },
+          { name: "license", label: "Professional licence number", type: "text", placeholder: "Optional", half: true },
+          { name: "linkedin", label: "LinkedIn profile", type: "text", placeholder: "linkedin.com/in/…", half: true },
+        ],
+      };
+    case "disciplines":
+      return {
+        title: "Edit sector & roles", subtitle: "Choose your disciplines and work environment.",
+        fields: [
+          { name: "disciplines", label: "Sector & roles", type: "chips", options: DISCIPLINES },
+          { name: "environment", label: "Work environment", type: "chips", options: ["Onshore", "Offshore", "Deepwater", "Office-based"] },
+        ],
+      };
+    case "mentoring":
+      return {
+        title: "Edit mentoring", subtitle: "Manage your mentoring preferences.",
+        fields: [
+          { name: "mentoring", label: "I'm open to", type: "chips", options: ["Mentoring students & interns", "Mentoring organization staff"], hint: "Optional" },
+          { name: "mentorAreas", label: "Topics I can mentor on", type: "chips", options: DISCIPLINES },
+          { name: "mentorTime", label: "Time I can give", type: "select", options: ["1 hour a month", "2–4 hours a month", "Weekly sessions"], half: true },
+          { name: "mentorFormat", label: "Preferred format", type: "select", options: ["Virtual", "In person", "Both"], half: true },
+        ],
+      };
+    case "credentials":
+      return {
+        title: "Edit credentials", subtitle: "Update your licence and professional links.",
+        fields: [
+          { name: "license", label: "Professional licence number", type: "text", half: true },
+          { name: "linkedin", label: "LinkedIn profile", type: "text", placeholder: "linkedin.com/in/…", half: true },
+        ],
+      };
+    case "education":
+      return {
+        title: "Edit education", subtitle: "Update your school and course details.",
+        fields: [
+          { name: "institution", label: "Institution", type: "text" },
+          { name: "course", label: "Course of study", type: "text", half: true },
+          { name: "level", label: "Current level", type: "select", options: ["100 Level", "200 Level", "300 Level", "400 Level", "500 Level", "Graduate", "Postgraduate"], half: true },
+          { name: "gradYear", label: "Expected graduation", type: "select", options: ["2026", "2027", "2028", "2029", "2030"], half: true },
+          { name: "matric", label: "Matric / Student ID", type: "text", half: true },
+        ],
+      };
+    case "interests":
+      return {
+        title: "Edit interests & goals", subtitle: "Choose your areas of interest and what you're looking for.",
+        fields: [
+          { name: "interests", label: "Areas of interest", type: "chips", options: DISCIPLINES, hint: "Pick the areas you want to explore" },
+          { name: "type", label: "Looking for", type: "chips", options: ["SIWES / IT", "Internship", "Graduate trainee", "Mentorship"] },
+        ],
+      };
+    case "projects":
+      return { title: "Edit projects", subtitle: "Manage your class projects and research.", fields: [], saveLabel: "Done" };
+    case "company":
+      return {
+        title: "Edit company record", subtitle: "Update your legal and operational details.",
+        fields: [
+          { name: "rc", label: "RC / Registration number", type: "text", placeholder: "RC 1234567", half: true },
+          { name: "permit", label: "NUPRC / NMDPRA permit number", type: "text", placeholder: "Optional", half: true },
+          { name: "address", label: "Head office address", type: "textarea" },
+          { name: "segments", label: "Sectors & services", type: "chips", options: DISCIPLINES },
+        ],
+      };
+    case "contact":
+      return {
+        title: "Edit account admin", subtitle: "The person who manages this account.",
+        fields: [
+          { name: "contactName", label: "Full name", type: "text", half: true },
+          { name: "contactRole", label: "Role", type: "text", placeholder: "e.g. HR Manager", half: true },
+          { name: "contactPhone", label: "Phone number", type: "tel", half: true },
+          { name: "contactEmail", label: "Work email", type: "email", half: true },
+        ],
+      };
+    case "team": return { title: "Edit team", subtitle: "Manage team members.", fields: [], saveLabel: "Done" };
+    case "jobs": return { title: "Edit job openings", subtitle: "Manage your job postings.", fields: [], saveLabel: "Done" };
+    default: return null;
+  }
 }
