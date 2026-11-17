@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Logo, HelpLink } from "@/components/brand";
 import { AvatarDropdown } from "@/components/avatar-dropdown";
-import { Modal, Field, TextInput, TextArea, ChipSelect, SelectInput } from "@/components/modal";
+import { Modal, Field as FormField, TextInput, TextArea, ChipSelect, SelectInput } from "@/components/modal";
 import { PATHS, isPathType, loadProfile, readImage, saveProfile, type Field, type PathType, type Values } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/profile/$type")({
@@ -572,7 +572,7 @@ function ModalField({ f, value, onChange }: { f: Field; value: Values[string] | 
     const a = Array.isArray(value) ? value : [];
     control = <ChipSelect options={f.options ?? []} value={a} onChange={onChange} />;
   } else control = <TextInput value={s} onChange={onChange} placeholder={f.placeholder} type={f.type === "email" ? "email" : f.type === "tel" ? "tel" : f.type === "number" ? "number" : f.type === "date" ? "date" : "text"} />;
-  return <Field label={f.label} hint={f.hint} half={f.half}>{control}</Field>;
+  return <FormField label={f.label} hint={f.hint} half={f.half}>{control}</FormField>;
 }
 
 type ModalConfig = { title: string; subtitle?: string; saveLabel?: string; fields: Field[] };

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardTypeRouteImport } from './routes/dashboard.$type'
 import { Route as OnboardingTypeRouteImport } from './routes/onboarding.$type'
 import { Route as ProfileTypeRouteImport } from './routes/profile.$type'
+import { Route as SettingsTypeRouteImport } from './routes/settings.$type'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,18 +35,25 @@ const ProfileTypeRoute = ProfileTypeRouteImport.update({
   path: '/profile/$type',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsTypeRoute = SettingsTypeRouteImport.update({
+  id: '/settings/$type',
+  path: '/settings/$type',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard/$type': typeof DashboardTypeRoute
   '/onboarding/$type': typeof OnboardingTypeRoute
   '/profile/$type': typeof ProfileTypeRoute
+  '/settings/$type': typeof SettingsTypeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard/$type': typeof DashboardTypeRoute
   '/onboarding/$type': typeof OnboardingTypeRoute
   '/profile/$type': typeof ProfileTypeRoute
+  '/settings/$type': typeof SettingsTypeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,18 +61,30 @@ export interface FileRoutesById {
   '/dashboard/$type': typeof DashboardTypeRoute
   '/onboarding/$type': typeof OnboardingTypeRoute
   '/profile/$type': typeof ProfileTypeRoute
+  '/settings/$type': typeof SettingsTypeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard/$type' | '/onboarding/$type' | '/profile/$type'
+  fullPaths:
+    | '/'
+    | '/dashboard/$type'
+    | '/onboarding/$type'
+    | '/profile/$type'
+    | '/settings/$type'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard/$type' | '/onboarding/$type' | '/profile/$type'
+  to:
+    | '/'
+    | '/dashboard/$type'
+    | '/onboarding/$type'
+    | '/profile/$type'
+    | '/settings/$type'
   id:
     | '__root__'
     | '/'
     | '/dashboard/$type'
     | '/onboarding/$type'
     | '/profile/$type'
+    | '/settings/$type'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -72,6 +92,7 @@ export interface RootRouteChildren {
   DashboardTypeRoute: typeof DashboardTypeRoute
   OnboardingTypeRoute: typeof OnboardingTypeRoute
   ProfileTypeRoute: typeof ProfileTypeRoute
+  SettingsTypeRoute: typeof SettingsTypeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -104,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileTypeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/$type': {
+      id: '/settings/$type'
+      path: '/settings/$type'
+      fullPath: '/settings/$type'
+      preLoaderRoute: typeof SettingsTypeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -112,6 +140,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardTypeRoute: DashboardTypeRoute,
   OnboardingTypeRoute: OnboardingTypeRoute,
   ProfileTypeRoute: ProfileTypeRoute,
+  SettingsTypeRoute: SettingsTypeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
